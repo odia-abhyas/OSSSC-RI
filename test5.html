@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odia Abhyas</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  .q-image-wrap{margin:12px 0;display:flex;justify-content:center;align-items:center}
+  .img-loader{width:50px;height:50px;border:5px solid #ddd;border-top:5px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  .q-image{max-width:100%;border-radius:12px;display:none}
+  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{margin:0;background:#f4f6f8;padding:0}
+  .loader{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+  .circle{width:70px;height:70px;border:7px solid #ddd;border-top:7px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hidden{display:none}
+  .header{background:#fff;padding:12px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd}
+  .container{padding:14px}
+  button{padding:12px;border:none;border-radius:10px;background:#2c5364;color:#fff;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.4}
+  .q-inst{font-size:14px}
+  .question{font-weight:bold;margin:8px 0}
+  .option{background:#fff;border:1px solid #ccc;padding:12px;border-radius:10px;margin-bottom:10px;cursor:pointer}
+  .option.selected{background:#e8f1f5;border-color:#2c5364}
+  .nav{display:flex;justify-content:space-between;margin:10px 0}
+  .grid{display:flex;flex-wrap:wrap;gap:6px}
+  .grid div{width:32px;height:32px;border:1px solid #2c5364;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .grid .attempted{background:#2c5364;color:#fff;border-radius:50%}
+  .score{padding:16px}
+  .card{background:#fff;padding:12px;border-radius:12px;margin-bottom:10px}
+  .filter{display:flex;gap:6px;margin-top:10px}
+  .filter button{flex:1;background:#ccc;color:#000}
+  .filter .active{background:#2c5364;color:#fff}
+  .popup{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center}
+  .popup-box{background:#fff;padding:18px;border-radius:14px;width:85%;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="loader" class="loader">
+  <div class="circle"></div>
+  <p>Checking user…</p>
+</div>
+
+<div id="instruction" class="hidden container">
+  <h3>OSSSC RI Odia Sectional - 5</h3>
+  <ul>
+    <li>Time: 20 Minutes</li>
+      <li>Total Questions: 20 </li>
+    <li>Negative Marking: 0.25 per wrong answer</li>
+    <li>Submit anytime</li>
+  </ul>
+  <button onclick="startTest()">Start Test</button>
+</div>
+
+<div id="test" class="hidden">
+  <div class="header">
+    <b></b>
+      <div class="q-inst">OSSSC RI Odia Sectional - 5</div>
+    <span id="timer">20:00</span>
+  </div>
+  <div class="container">
+    
+    
+
+    <div id="imgWrap" class="q-image-wrap hidden">
+      <div id="imgLoader" class="img-loader"></div>
+      <img id="qImg" class="q-image">
+    </div>
+<div class="question" id="question"></div>
+    <div id="options"></div>
+
+    <div class="nav">
+      <button id="prevBtn" onclick="prevQ()">Previous</button>
+      <button id="nextBtn" onclick="nextQ()">Next</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <br>
+    <button onclick="submitTest()">Submit Test</button>
+  </div>
+</div>
+
+<div id="score" class="hidden score">
+  <h3>OSSSC RI Odia Sectional - 5</h3>
+  <p id="userScore"></p>
+  <div class="card" id="stats"></div>
+
+  <div class="filter">
+    <button class="active" onclick="filterQ('all',this)">All</button>
+    <button onclick="filterQ('correct',this)">Correct</button>
+    <button onclick="filterQ('wrong',this)">Wrong</button>
+    <button onclick="filterQ('unattempted',this)">Unattempted</button>
+  </div>
+
+  <div id="review"></div>
+  <br>
+  <button onclick="reattempt()">Reattempt</button>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-box">
+    <p>Your previous score & rank will be replaced.</p>
+    <button onclick="confirmReattempt()">OK</button>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+apiKey: "AIzaSyAm8LD9iSm24vG2rc_bBSjXuATXxs7-lbE",
+  authDomain: "odia-abhyas.firebaseapp.com",
+  projectId: "odia-abhyas"
+});
+const db = firebase.firestore();
+
+const TEST_ID = "OSSSC RI Odia Sectional - 5";
+const STORAGE_KEY = "RESULT_" + TEST_ID;
+const TEST_DURATION_MINUTES = 20;
+const NEGATIVE_MARK = 0.25;
+
+const user = {
+  phone: localStorage.getItem("user_phone"),
+  name: localStorage.getItem("user_name")
+};
+if(!user.phone){ alert("Login required"); throw ""; }
+
+/* ===== Added explanations to questions ===== */
+const questions = [
+
+
+
+{q:"'ଅନୁଗ୍ରହ' ଶବ୍ଦର ବିପରୀତ ଶବ୍ଦଟି କେଉଁଟି?",
+o:["ନିଗ୍ରହ","ଅବଜ୍ଞା","ଦୟା","କ୍ରୋଧ"],
+a:0,
+exp:"'ଅନୁଗ୍ରହ' ଅର୍ଥ କୃପା କିମ୍ବା ଦୟା। ଏହାର ବିପରୀତ 'ନିଗ୍ରହ' ଯାହାର ଅର୍ଥ ଦମନ କିମ୍ବା କଠୋର ବ୍ୟବହାର।"},
+
+{q:"Choose the correct English translation: ସାମ୍ପ୍ରତିକ ସମୟରେ ମାନସିକ ସ୍ଵାସ୍ଥ୍ୟ ପ୍ରତି ସଚେତନତା ସୃଷ୍ଟି କରିବା ଅପରିହାର୍ଯ୍ୟ ହୋଇପଡ଼ିଛି।",
+o:["Creating awareness about mental health has become indispensable in contemporary times.","Mental health is very important for all people nowadays.","People should be aware of their mental health problems in future.","It is necessary to talk about brain health in current situation."],
+a:0,
+exp:"ଏଠାରେ 'ଅପରିହାର୍ଯ୍ୟ' ଅର୍ଥ indispensable, ସେହିପରି ପ୍ରଥମ ବିକଳ୍ପଟି ସଠିକ୍।"},
+
+{q:"'ଉତ୍ତର' + 'ଆୟନ' - ଏହାର ସଠିକ୍ ସନ୍ଧି ବିଚ୍ଛେଦ ରୂପଟି କେଉଁଟି?",
+o:["ଉତ୍ତରାୟନ","ଉତ୍ତରାୟଣ","ଉତ୍ତରାୟନ୍","ଉତ୍ତରୟଣ"],
+a:1,
+exp:"ସନ୍ଧି ନିୟମ ଅନୁସାରେ 'ଉତ୍ତର' ଓ 'ଆୟନ' ମିଶି 'ଉତ୍ତରାୟଣ' ହୁଏ।"},
+
+{q:"ନିମ୍ନଲିଖିତ ବାକ୍ୟରେ ରେଖାଙ୍କିତ ପଦଟି କେଉଁ ପ୍ରକାରର 'କ୍ରିୟା ବିଶେଷଣ' ଅଟେ? ବାକ୍ୟ: ସେ ନିଶ୍ଚୟ ଏହି କାର୍ଯ୍ୟଟି ସଫଳତାର ସହ ସମ୍ପାଦନ କରିବେ।",
+o:["କାଳବାଚକ","ସ୍ଥିତିବାଚକ","ପଦାନ୍ଵୟୀ","ନିଶ୍ଚୟାର୍ଥକ"],
+a:3,
+exp:"'ନିଶ୍ଚୟ' ଶବ୍ଦଟି କାର୍ଯ୍ୟ ନିଶ୍ଚିତତା ବୁଝାଏ, ତେଣୁ ଏହା ନିଶ୍ଚୟାର୍ଥକ କ୍ରିୟା ବିଶେଷଣ।"},
+
+{q:"ବାକ୍ୟରେ କ୍ରିୟାର ଆଧାରକୁ କେଉଁ କାରକ କୁହାଯାଏ?",
+o:["କର୍ତ୍ତୃ କାରକ","ଅଧିକରଣ କାରକ","ଅପାଦାନ କାରକ","କର୍ମ କାରକ"],
+a:1,
+exp:"ଯେଉଁଥିରେ କ୍ରିୟା ଘଟେ ସେହି ଆଧାରକୁ ଅଧିକରଣ କାରକ କୁହାଯାଏ।"},
+
+{q:"'ପ୍ରତିଦିନ' ଶବ୍ଦଟି କେଉଁ ସମାସର ଅନ୍ତର୍ଗତ?",
+o:["ତତ୍‌ପୁରୁଷ","ବହୁବ୍ରୀହି","ଅବ୍ୟୟୀଭାବ","କର୍ମଧାରୟ"],
+a:2,
+exp:"'ପ୍ରତିଦିନ' ଏକ ଅବ୍ୟୟୀଭାବ ସମାସ ଯେଉଁଠାରେ ଶବ୍ଦଟି ଅବ୍ୟୟ ଭାବରେ ବ୍ୟବହୃତ।"},
+
+{q:"\"ହାତ କରିବା\" ରୂଢ଼ିର ପ୍ରକୃତ ଅର୍ଥ କ’ଣ?",
+o:["ହାତ ମିଳାଇବା","କୌଶଳରେ ନିଜ ଆୟତ୍ତକୁ ଆଣିବା","କାମରେ ସାହାଯ୍ୟ କରିବା","ହାତରେ ଧରିବା"],
+a:1,
+exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ହେଉଛି ଚାଳାକୀ ସହ କାହାକୁ ନିଜ ନିୟନ୍ତ୍ରଣରେ ଆଣିବା।"},
+
+{q:"( ) ବନ୍ଧନୀ ମଧ୍ୟରେ ଥିବା ଅଶୁଦ୍ଧ ପଦଟିକୁ ଶୁଦ୍ଧ ରୂପରେ ବାଛନ୍ତୁ: ରାଜାଙ୍କର (ପ୍ରତିମୂର୍ତ୍ତୀ) ସହର ମଝିରେ ସ୍ଥାପିତ ହୋଇଛି।",
+o:["ପ୍ରତିମୂର୍ତ୍ତି","ପ୍ରତିମୁର୍ତ୍ତି","ପ୍ରତିମୁର୍ତ୍ତୀ","ପରିବର୍ତ୍ତନର ଆବଶ୍ୟକତା ନାହିଁ"],
+a:0,
+exp:"ଠିକ୍ ଶବ୍ଦ 'ପ୍ରତିମୂର୍ତ୍ତି', ଯାହାର ଅର୍ଥ ମୂର୍ତ୍ତି କିମ୍ବା ପ୍ରତିଚ୍ଛବି।"},
+
+{q:"'ଯିଏ ପୂର୍ବେ କେବେ ହୋଇନାହିଁ' - ଏହାକୁ ଏକ ପଦରେ ପ୍ରକାଶ କଲେ କ’ଣ ହେବ?",
+o:["ଅଭୂତପୂର୍ବ","ଅନୁଭୂତପୂର୍ବ","ଅଶ୍ରୁତପୂର୍ବ","ଅଦୃଷ୍ଟପୂର୍ବ"],
+a:0,
+exp:"ଯାହା ପୂର୍ବରୁ କେବେ ହୋଇନାହିଁ, ସେହିଥିରେ 'ଅଭୂତପୂର୍ବ' ଶବ୍ଦ ବ୍ୟବହୃତ ହୁଏ।"},
+
+{q:"'ସ୍ଥାବର' ଶବ୍ଦର ସଠିକ୍ ବିପରୀତ ଶବ୍ଦ ଚୟନ କରନ୍ତୁ।",
+o:["ଜଙ୍ଗମ","ଅସ୍ଥାବର","ସ୍ଥିର","ଗତିଶୀଳ"],
+a:0,
+exp:"'ସ୍ଥାବର' ଅର୍ଥ ଅଚଳ, ତାହାର ବିପରୀତ 'ଜଙ୍ଗମ' ଯାହା ଚଳନଶୀଳ।"},
+
+{q:"Translate the following complex sentence into Odia: \"Effective communication plays a pivotal role in maintaining transparency within an organization.\"",
+o:["ସଂସ୍ଥା ମଧ୍ୟରେ ସ୍ଵଚ୍ଛତା ବଜାୟ ରଖିବାରେ ପ୍ରଭାବଶାଳୀ ଯୋଗାଯୋଗ ଏକ ପ୍ରମୁଖ ଭୂମିକା ଗ୍ରହଣ କରେ।","ଗୋଟିଏ ଅଫିସରେ ଭଲ ଭାବରେ କଥା କହିଲେ ସବୁ କାମ ସହଜ ହୋଇଥାଏ।","ଯୋଗାଯୋଗ ଠିକ୍ ରହିଲେ ସଂସ୍ଥାରେ କୌଣସି ଗଣ୍ଡଗୋଳ ହୁଏ ନାହିଁ।","ପ୍ରଭାବଶାଳୀ ଯୋଗାଯୋଗ ବିନା କୌଣସି ସଂସ୍ଥାର ଉନ୍ନତି ସମ୍ଭବ ନୁହେଁ।"],
+a:0,
+exp:"ବାକ୍ୟର ଅର୍ଥ ଅନୁସାରେ 'pivotal role' = ପ୍ରମୁଖ ଭୂମିକା, ତେଣୁ ପ୍ରଥମ ବିକଳ୍ପ ସଠିକ୍।"},
+
+{q:"\"ଧର୍ମ ଶାଳ ପାଞ୍ଚିବା\" ରୂଢ଼ିର ଅର୍ଥ କ’ଣ?",
+o:["ଧର୍ମ କର୍ମ କରିବା","ପର ଅନିଷ୍ଟ ଚିନ୍ତା କରିବା","ଶାଳ ମଧ୍ୟରେ ରହିବା","ଧର୍ମ ଗ୍ରନ୍ଥ ପଢ଼ିବା"],
+a:1,
+exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ହେଉଛି ଅନ୍ୟଙ୍କ ଅନର୍ଥ କିମ୍ବା କୁକର୍ମ ଚିନ୍ତା କରିବା।"},
+
+{q:"Choose the correct English translation: ଯେଉଁ କାର୍ଯ୍ୟ ଆଜି କରିବାର ଅଛି, ତାକୁ କାଲି ପାଇଁ ପକାଇ ରଖ ନାହିଁ।",
+o:["Do not put off until tomorrow what you have to do today.","Today's work is not for tomorrow.","You should not wait for tomorrow to do today's job.","Work hard today and do not sleep tomorrow."],
+a:0,
+exp:"ଏହା ଏକ ପ୍ରସିଦ୍ଧ ନୀତିବାକ୍ୟ, ଯାହାର ସଠିକ୍ ଅନୁବାଦ ପ୍ରଥମ ବିକଳ୍ପ।"},
+
+{q:"ବାକ୍ୟର ଅଂଶ ଗୁଡ଼ିକୁ ସଠିକ କ୍ରମରେ ପୁନଃସଜ୍ଜିତ କରନ୍ତୁ। ଅହିଂସା ଓ ସତ୍ୟ P. ସ୍ଵାଧୀନତା ଆନ୍ଦୋଳନରେ Q. ଭାରତୀୟମାନଙ୍କ ପାଇଁ R. ମୁଖ୍ୟ ଆୟୁଧ ପାଲଟିଥିଲା S. ମହାତ୍ମା ଗାନ୍ଧୀଙ୍କ ଦ୍ଵାରା ପ୍ରଦତ୍ତ",
+o:["SQPR","PQRS","RQSP","QSPR"],
+a:0,
+exp:"ଠିକ୍ ବାକ୍ୟ ଗଠନ ପାଇଁ ପ୍ରଥମେ S, ପରେ Q, P, R ଆସିବ।"},
+
+{q:"ଦିଆଯାଇଥିବା ଇଂରାଜୀ ବାକ୍ୟକୁ ଓଡ଼ିଆରେ ଅନୁବାଦ କରନ୍ତୁ: \"The sudden surge in fuel prices has adversely affected the common man's budget.\"",
+o:["ଜାଳେଣି ଦରରେ ହଠାତ୍ ବୃଦ୍ଧି ସାଧାରଣ ଜନତାଙ୍କ ବଜେଟ୍‌କୁ କୁପ୍ରଭାବିତ କରିଛି।","ତେଲ ଦର ବଢ଼ିବା ଯୋଗୁଁ ଲୋକମାନେ ବହୁତ କଷ୍ଟ ପାଉଛନ୍ତି।","ସାଧାରଣ ଲୋକଙ୍କ ପାଖରେ ପଇସା ନାହିଁ କାରଣ ପେଟ୍ରୋଲ ଦର ବଢ଼ିଛି।","ବଜେଟ୍‌ରେ ତେଲ ଦର ବଢ଼ିଥିବାରୁ ସମସ୍ତେ ଚିନ୍ତାରେ ଅଛନ୍ତି।"],
+a:0,
+exp:"ବାକ୍ୟର ମୁଖ୍ୟ ଅର୍ଥ 'adversely affected budget', ତେଣୁ ପ୍ରଥମ ବିକଳ୍ପ ସଠିକ୍।"},
+
+{q:"<span style='font-weight: normal;'>ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଅତି ଗଭୀର ଭାବେ ପଢ଼ନ୍ତୁ ଏବଂ ପ୍ରଶ୍ନଗୁଡ଼ିକର ଉପଯୁକ୍ତ ଉତ୍ତର ଚୟନ କରନ୍ତୁ।<br><br>ସାମାଜିକ ଅବିଚାର ହେଉଛି ମାନବ ସଭ୍ୟତା ପାଇଁ ଏକ ଅଭିଶାପ, ଯାହା ସମାଜର ବିଭିନ୍ନ ସ୍ତରରେ ପ୍ରଚ୍ଛନ୍ନ କିମ୍ବା ପ୍ରକଟ ଭାବେ ବିଦ୍ୟମାନ। ଏହା ମୁଖ୍ୟତଃ ସମ୍ପଦର ଅସମାନ ବଣ୍ଟନ, ସୁଯୋଗର ଅଭାବ ଏବଂ କେତେକ ନିର୍ଦ୍ଦିଷ୍ଟ ଗୋଷ୍ଠୀ ପ୍ରତି ବୈଷମ୍ୟମୂଳକ ଆଚରଣରୁ ସୃଷ୍ଟି ହୋଇଥାଏ। ଯେତେବେଳେ ସମାଜର ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ବର୍ଗ ସେମାନଙ୍କର ମୌଳିକ ମାନବାଧିକାରରୁ ବଞ୍ଚିତ ହୁଅନ୍ତି ଏବଂ ଶକ୍ତିଶାଳୀ ଗୋଷ୍ଠୀ ଦ୍ୱାରା ଶୋଷିତ ହୁଅନ୍ତି, ସେତେବେଳେ ସାମାଜିକ ଅବିଚାରର ମୂଳଦୁଆ ସୁଦୃଢ଼ ହୁଏ। ଜାତିଗତ ଭେଦଭାବ, ଲିଙ୍ଗଗତ ଅସମାନତା ଏବଂ ଆର୍ଥିକ ଦୂରବସ୍ଥା ଏହାର ଜ୍ୱଳନ୍ତ ଉଦାହରଣ। ଏହା କେବଳ ବ୍ୟକ୍ତିବିଶେଷଙ୍କୁ ପ୍ରଭାବିତ କରେ ନାହିଁ, ବରଂ ଦେଶର ସାମୂହିକ ପ୍ରଗତିକୁ ମଧ୍ୟ ବାଧାପ୍ରାପ୍ତ କରିଥାଏ। ରାଜନୈତିକ ସ୍ୱାର୍ଥସାଧନ ପାଇଁ ଅନେକ ସମୟରେ ଏହି ବିଭେଦକୁ ଅଧିକ ତୀବ୍ର କରାଯାଇଥାଏ, ଯାହା ସାମାଜିକ ସଂହତିକୁ ନଷ୍ଟ କରିଦିଏ।<br>ଅନ୍ୟପକ୍ଷରେ, ଏହି ଅବିଚାର ବିରୁଦ୍ଧରେ ସ୍ୱର ଉତ୍ତୋଳନ କରିବା ଏବଂ ନ୍ୟାୟ ପ୍ରତିଷ୍ଠା କରିବା ପାଇଁ ସାମ୍ବିଧାନିକ ବ୍ୟବସ୍ଥା ଓ ସାମାଜିକ ଜାଗରଣର ଅପରିହାର୍ଯ୍ୟତା ରହିଛି। ଶିକ୍ଷାର ପ୍ରସାର ଏବଂ ସଚେତନତା ମାଧ୍ୟମରେ ହିଁ ଏହି ମାନସିକତାକୁ ପରିବର୍ତ୍ତନ କରାଯାଇପାରିବ। ଯେପର୍ଯ୍ୟନ୍ତ ସମାଜର ସବୁଠାରୁ ଦୁର୍ବଳ ବର୍ଗର ବ୍ୟକ୍ତି ନିଜକୁ ସୁରକ୍ଷିତ ଏବଂ ସମ୍ମାନିତ ମନେ ନକରିଛି, ସେପର୍ଯ୍ୟନ୍ତ ଏକ ଆଦର୍ଶ ସମାଜର ପରିକଳ୍ପନା ଅସମ୍ପୂର୍ଣ୍ଣ। ସାମାଜିକ ନ୍ୟାୟର ପ୍ରକୃତ ଅର୍ଥ ହେଉଛି ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ ଆଇନଗତ ସୁରକ୍ଷା ଏବଂ ଗୌରବମୟ ଜୀବନ ଯାପନର ଅଧିକାର। ଏଥିପାଇଁ ପ୍ରତ୍ୟେକ ନାଗରିକଙ୍କର ନୈତିକ ଦାୟିତ୍ୱ ରହିଛି ଯେ ସେମାନେ ଅନ୍ୟାୟ ବିରୁଦ୍ଧରେ ସଂଗ୍ରାମ କରନ୍ତୁ ଏବଂ ଏକ ସମତାଭିତ୍ତିକ ସମାଜ ଗଠନରେ ସହାୟକ ହୁଅନ୍ତୁ।</span><br><br> ଅନୁଚ୍ଛେଦ ଅନୁଯାୟୀ, କେବେ ଏକ ଆଦର୍ଶ ସମାଜର ପରିକଳ୍ପନା ସମ୍ପୂର୍ଣ୍ଣ ହେବ?",
+ o:[
+   "ଯେତେବେଳେ ଦୁର୍ବଳ ବର୍ଗର ବ୍ୟକ୍ତି ନିଜକୁ ସୁରକ୍ଷିତ ଓ ସମ୍ମାନିତ ମନେ କରିବେ",
+   "ଯେତେବେଳେ ସମସ୍ତେ ସହରରେ ବାସ କରିବେ",
+   "ଯେତେବେଳେ ପ୍ରଯୁକ୍ତିବିଦ୍ୟାର ସର୍ବାଧିକ ବ୍ୟବହାର ହେବ",
+   "ଯେତେବେଳେ କେବଳ ଶକ୍ତିଶାଳୀ ଗୋଷ୍ଠୀ ଶାସନ କରିବେ"
+ ],
+ a:0,
+ exp:"Answer Refers to Passage"
+},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଅତି ଗଭୀର ଭାବେ ପଢ଼ନ୍ତୁ ଏବଂ ପ୍ରଶ୍ନଗୁଡ଼ିକର ଉପଯୁକ୍ତ ଉତ୍ତର ଚୟନ କରନ୍ତୁ।<br><br>ସାମାଜିକ ଅବିଚାର ହେଉଛି ମାନବ ସଭ୍ୟତା ପାଇଁ ଏକ ଅଭିଶାପ, ଯାହା ସମାଜର ବିଭିନ୍ନ ସ୍ତରରେ ପ୍ରଚ୍ଛନ୍ନ କିମ୍ବା ପ୍ରକଟ ଭାବେ ବିଦ୍ୟମାନ। ଏହା ମୁଖ୍ୟତଃ ସମ୍ପଦର ଅସମାନ ବଣ୍ଟନ, ସୁଯୋଗର ଅଭାବ ଏବଂ କେତେକ ନିର୍ଦ୍ଦିଷ୍ଟ ଗୋଷ୍ଠୀ ପ୍ରତି ବୈଷମ୍ୟମୂଳକ ଆଚରଣରୁ ସୃଷ୍ଟି ହୋଇଥାଏ। ଯେତେବେଳେ ସମାଜର ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ବର୍ଗ ସେମାନଙ୍କର ମୌଳିକ ମାନବାଧିକାରରୁ ବଞ୍ଚିତ ହୁଅନ୍ତି ଏବଂ ଶକ୍ତିଶାଳୀ ଗୋଷ୍ଠୀ ଦ୍ୱାରା ଶୋଷିତ ହୁଅନ୍ତି, ସେତେବେଳେ ସାମାଜିକ ଅବିଚାରର ମୂଳଦୁଆ ସୁଦୃଢ଼ ହୁଏ। ଜାତିଗତ ଭେଦଭାବ, ଲିଙ୍ଗଗତ ଅସମାନତା ଏବଂ ଆର୍ଥିକ ଦୂରବସ୍ଥା ଏହାର ଜ୍ୱଳନ୍ତ ଉଦାହରଣ। ଏହା କେବଳ ବ୍ୟକ୍ତିବିଶେଷଙ୍କୁ ପ୍ରଭାବିତ କରେ ନାହିଁ, ବରଂ ଦେଶର ସାମୂହିକ ପ୍ରଗତିକୁ ମଧ୍ୟ ବାଧାପ୍ରାପ୍ତ କରିଥାଏ। ରାଜନୈତିକ ସ୍ୱାର୍ଥସାଧନ ପାଇଁ ଅନେକ ସମୟରେ ଏହି ବିଭେଦକୁ ଅଧିକ ତୀବ୍ର କରାଯାଇଥାଏ, ଯାହା ସାମାଜିକ ସଂହତିକୁ ନଷ୍ଟ କରିଦିଏ।<br>ଅନ୍ୟପକ୍ଷରେ, ଏହି ଅବିଚାର ବିରୁଦ୍ଧରେ ସ୍ୱର ଉତ୍ତୋଳନ କରିବା ଏବଂ ନ୍ୟାୟ ପ୍ରତିଷ୍ଠା କରିବା ପାଇଁ ସାମ୍ବିଧାନିକ ବ୍ୟବସ୍ଥା ଓ ସାମାଜିକ ଜାଗରଣର ଅପରିହାର୍ଯ୍ୟତା ରହିଛି। ଶିକ୍ଷାର ପ୍ରସାର ଏବଂ ସଚେତନତା ମାଧ୍ୟମରେ ହିଁ ଏହି ମାନସିକତାକୁ ପରିବର୍ତ୍ତନ କରାଯାଇପାରିବ। ଯେପର୍ଯ୍ୟନ୍ତ ସମାଜର ସବୁଠାରୁ ଦୁର୍ବଳ ବର୍ଗର ବ୍ୟକ୍ତି ନିଜକୁ ସୁରକ୍ଷିତ ଏବଂ ସମ୍ମାନିତ ମନେ ନକରିଛି, ସେପର୍ଯ୍ୟନ୍ତ ଏକ ଆଦର୍ଶ ସମାଜର ପରିକଳ୍ପନା ଅସମ୍ପୂର୍ଣ୍ଣ। ସାମାଜିକ ନ୍ୟାୟର ପ୍ରକୃତ ଅର୍ଥ ହେଉଛି ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ ଆଇନଗତ ସୁରକ୍ଷା ଏବଂ ଗୌରବମୟ ଜୀବନ ଯାପନର ଅଧିକାର। ଏଥିପାଇଁ ପ୍ରତ୍ୟେକ ନାଗରିକଙ୍କର ନୈତିକ ଦାୟିତ୍ୱ ରହିଛି ଯେ ସେମାନେ ଅନ୍ୟାୟ ବିରୁଦ୍ଧରେ ସଂଗ୍ରାମ କରନ୍ତୁ ଏବଂ ଏକ ସମତାଭିତ୍ତିକ ସମାଜ ଗଠନରେ ସହାୟକ ହୁଅନ୍ତୁ।</span><br><br> ଏହି ଅନୁଚ୍ଛେଦରେ ଉଲ୍ଲେଖ ଥିବା 'ସାମାଜିକ ସଂହତି' ନଷ୍ଟ ହେବାର ଏକ ପ୍ରମୁଖ କାରଣ କ’ଣ?",
+ o:[
+   "ଜନସଂଖ୍ୟା ନିୟନ୍ତ୍ରଣ",
+   "ରାଜନୈତିକ ସ୍ୱାର୍ଥସାଧନ ପାଇଁ ବିଭେଦକୁ ତୀବ୍ର କରିବା",
+   "ସାମ୍ବିଧାନିକ ବ୍ୟବସ୍ଥାର ସଠିକ ପ୍ରୟୋଗ",
+   "ଶିକ୍ଷାର ମାନଦଣ୍ଡରେ ଉନ୍ନତି"
+ ],
+ a:1,
+ exp:"Answer Refers to Passage"
+},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଅତି ଗଭୀର ଭାବେ ପଢ଼ନ୍ତୁ ଏବଂ ପ୍ରଶ୍ନଗୁଡ଼ିକର ଉପଯୁକ୍ତ ଉତ୍ତର ଚୟନ କରନ୍ତୁ।<br><br>ସାମାଜିକ ଅବିଚାର ହେଉଛି ମାନବ ସଭ୍ୟତା ପାଇଁ ଏକ ଅଭିଶାପ, ଯାହା ସମାଜର ବିଭିନ୍ନ ସ୍ତରରେ ପ୍ରଚ୍ଛନ୍ନ କିମ୍ବା ପ୍ରକଟ ଭାବେ ବିଦ୍ୟମାନ। ଏହା ମୁଖ୍ୟତଃ ସମ୍ପଦର ଅସମାନ ବଣ୍ଟନ, ସୁଯୋଗର ଅଭାବ ଏବଂ କେତେକ ନିର୍ଦ୍ଦିଷ୍ଟ ଗୋଷ୍ଠୀ ପ୍ରତି ବୈଷମ୍ୟମୂଳକ ଆଚରଣରୁ ସୃଷ୍ଟି ହୋଇଥାଏ। ଯେତେବେଳେ ସମାଜର ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ବର୍ଗ ସେମାନଙ୍କର ମୌଳିକ ମାନବାଧିକାରରୁ ବଞ୍ଚିତ ହୁଅନ୍ତି ଏବଂ ଶକ୍ତିଶାଳୀ ଗୋଷ୍ଠୀ ଦ୍ୱାରା ଶୋଷିତ ହୁଅନ୍ତି, ସେତେବେଳେ ସାମାଜିକ ଅବିଚାରର ମୂଳଦୁଆ ସୁଦୃଢ଼ ହୁଏ। ଜାତିଗତ ଭେଦଭାବ, ଲିଙ୍ଗଗତ ଅସମାନତା ଏବଂ ଆର୍ଥିକ ଦୂରବସ୍ଥା ଏହାର ଜ୍ୱଳନ୍ତ ଉଦାହରଣ। ଏହା କେବଳ ବ୍ୟକ୍ତିବିଶେଷଙ୍କୁ ପ୍ରଭାବିତ କରେ ନାହିଁ, ବରଂ ଦେଶର ସାମୂହିକ ପ୍ରଗତିକୁ ମଧ୍ୟ ବାଧାପ୍ରାପ୍ତ କରିଥାଏ। ରାଜନୈତିକ ସ୍ୱାର୍ଥସାଧନ ପାଇଁ ଅନେକ ସମୟରେ ଏହି ବିଭେଦକୁ ଅଧିକ ତୀବ୍ର କରାଯାଇଥାଏ, ଯାହା ସାମାଜିକ ସଂହତିକୁ ନଷ୍ଟ କରିଦିଏ।<br>ଅନ୍ୟପକ୍ଷରେ, ଏହି ଅବିଚାର ବିରୁଦ୍ଧରେ ସ୍ୱର ଉତ୍ତୋଳନ କରିବା ଏବଂ ନ୍ୟାୟ ପ୍ରତିଷ୍ଠା କରିବା ପାଇଁ ସାମ୍ବିଧାନିକ ବ୍ୟବସ୍ଥା ଓ ସାମାଜିକ ଜାଗରଣର ଅପରିହାର୍ଯ୍ୟତା ରହିଛି। ଶିକ୍ଷାର ପ୍ରସାର ଏବଂ ସଚେତନତା ମାଧ୍ୟମରେ ହିଁ ଏହି ମାନସିକତାକୁ ପରିବର୍ତ୍ତନ କରାଯାଇପାରିବ। ଯେପର୍ଯ୍ୟନ୍ତ ସମାଜର ସବୁଠାରୁ ଦୁର୍ବଳ ବର୍ଗର ବ୍ୟକ୍ତି ନିଜକୁ ସୁରକ୍ଷିତ ଏବଂ ସମ୍ମାନିତ ମନେ ନକରିଛି, ସେପର୍ଯ୍ୟନ୍ତ ଏକ ଆଦର୍ଶ ସମାଜର ପରିକଳ୍ପନା ଅସମ୍ପୂର୍ଣ୍ଣ। ସାମାଜିକ ନ୍ୟାୟର ପ୍ରକୃତ ଅର୍ଥ ହେଉଛି ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ ଆଇନଗତ ସୁରକ୍ଷା ଏବଂ ଗୌରବମୟ ଜୀବନ ଯାପନର ଅଧିକାର। ଏଥିପାଇଁ ପ୍ରତ୍ୟେକ ନାଗରିକଙ୍କର ନୈତିକ ଦାୟିତ୍ୱ ରହିଛି ଯେ ସେମାନେ ଅନ୍ୟାୟ ବିରୁଦ୍ଧରେ ସଂଗ୍ରାମ କରନ୍ତୁ ଏବଂ ଏକ ସମତାଭିତ୍ତିକ ସମାଜ ଗଠନରେ ସହାୟକ ହୁଅନ୍ତୁ।</span><br><br> ’ସାମାଜିକ ନ୍ୟାୟ’ର ପ୍ରକୃତ ଅର୍ଥ ଏହି ଅନୁଚ୍ଛେଦରେ କିପରି ବର୍ଣ୍ଣନା କରାଯାଇଛି?",
+ o:[
+   "ସବୁଠାରୁ ଶକ୍ତିଶାଳୀ ବ୍ୟକ୍ତିଙ୍କୁ ଅଧିକ ସୁବିଧା ପ୍ରଦାନ",
+   "ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ ଆଇନଗତ ସୁରକ୍ଷା ଓ ଗୌରବମୟ ଜୀବନ",
+   "କେବଳ ଆର୍ଥିକ ଲାଭ ପାଇଁ କାର୍ଯ୍ୟ କରିବା",
+   "ପାରମ୍ପରିକ ବିଭେଦକୁ ବଜାୟ ରଖିବା"
+ ],
+ a:1,
+ exp:"Answer Refers to Passage"
+},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଅତି ଗଭୀର ଭାବେ ପଢ଼ନ୍ତୁ ଏବଂ ପ୍ରଶ୍ନଗୁଡ଼ିକର ଉପଯୁକ୍ତ ଉତ୍ତର ଚୟନ କରନ୍ତୁ।<br><br>ସାମାଜିକ ଅବିଚାର ହେଉଛି ମାନବ ସଭ୍ୟତା ପାଇଁ ଏକ ଅଭିଶାପ, ଯାହା ସମାଜର ବିଭିନ୍ନ ସ୍ତରରେ ପ୍ରଚ୍ଛନ୍ନ କିମ୍ବା ପ୍ରକଟ ଭାବେ ବିଦ୍ୟମାନ। ଏହା ମୁଖ୍ୟତଃ ସମ୍ପଦର ଅସମାନ ବଣ୍ଟନ, ସୁଯୋଗର ଅଭାବ ଏବଂ କେତେକ ନିର୍ଦ୍ଦିଷ୍ଟ ଗୋଷ୍ଠୀ ପ୍ରତି ବୈଷମ୍ୟମୂଳକ ଆଚରଣରୁ ସୃଷ୍ଟି ହୋଇଥାଏ। ଯେତେବେଳେ ସମାଜର ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ବର୍ଗ ସେମାନଙ୍କର ମୌଳିକ ମାନବାଧିକାରରୁ ବଞ୍ଚିତ ହୁଅନ୍ତି ଏବଂ ଶକ୍ତିଶାଳୀ ଗୋଷ୍ଠୀ ଦ୍ୱାରା ଶୋଷିତ ହୁଅନ୍ତି, ସେତେବେଳେ ସାମାଜିକ ଅବିଚାରର ମୂଳଦୁଆ ସୁଦୃଢ଼ ହୁଏ। ଜାତିଗତ ଭେଦଭାବ, ଲିଙ୍ଗଗତ ଅସମାନତା ଏବଂ ଆର୍ଥିକ ଦୂରବସ୍ଥା ଏହାର ଜ୍ୱଳନ୍ତ ଉଦାହରଣ। ଏହା କେବଳ ବ୍ୟକ୍ତିବିଶେଷଙ୍କୁ ପ୍ରଭାବିତ କରେ ନାହିଁ, ବରଂ ଦେଶର ସାମୂହିକ ପ୍ରଗତିକୁ ମଧ୍ୟ ବାଧାପ୍ରାପ୍ତ କରିଥାଏ। ରାଜନୈତିକ ସ୍ୱାର୍ଥସାଧନ ପାଇଁ ଅନେକ ସମୟରେ ଏହି ବିଭେଦକୁ ଅଧିକ ତୀବ୍ର କରାଯାଇଥାଏ, ଯାହା ସାମାଜିକ ସଂହତିକୁ ନଷ୍ଟ କରିଦିଏ।<br>ଅନ୍ୟପକ୍ଷରେ, ଏହି ଅବିଚାର ବିରୁଦ୍ଧରେ ସ୍ୱର ଉତ୍ତୋଳନ କରିବା ଏବଂ ନ୍ୟାୟ ପ୍ରତିଷ୍ଠା କରିବା ପାଇଁ ସାମ୍ବିଧାନିକ ବ୍ୟବସ୍ଥା ଓ ସାମାଜିକ ଜାଗରଣର ଅପରିହାର୍ଯ୍ୟତା ରହିଛି। ଶିକ୍ଷାର ପ୍ରସାର ଏବଂ ସଚେତନତା ମାଧ୍ୟମରେ ହିଁ ଏହି ମାନସିକତାକୁ ପରିବର୍ତ୍ତନ କରାଯାଇପାରିବ। ଯେପର୍ଯ୍ୟନ୍ତ ସମାଜର ସବୁଠାରୁ ଦୁର୍ବଳ ବର୍ଗର ବ୍ୟକ୍ତି ନିଜକୁ ସୁରକ୍ଷିତ ଏବଂ ସମ୍ମାନିତ ମନେ ନକରିଛି, ସେପର୍ଯ୍ୟନ୍ତ ଏକ ଆଦର୍ଶ ସମାଜର ପରିକଳ୍ପନା ଅସମ୍ପୂର୍ଣ୍ଣ। ସାମାଜିକ ନ୍ୟାୟର ପ୍ରକୃତ ଅର୍ଥ ହେଉଛି ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ ଆଇନଗତ ସୁରକ୍ଷା ଏବଂ ଗୌରବମୟ ଜୀବନ ଯାପନର ଅଧିକାର। ଏଥିପାଇଁ ପ୍ରତ୍ୟେକ ନାଗରିକଙ୍କର ନୈତିକ ଦାୟିତ୍ୱ ରହିଛି ଯେ ସେମାନେ ଅନ୍ୟାୟ ବିରୁଦ୍ଧରେ ସଂଗ୍ରାମ କରନ୍ତୁ ଏବଂ ଏକ ସମତାଭିତ୍ତିକ ସମାଜ ଗଠନରେ ସହାୟକ ହୁଅନ୍ତୁ।</span><br><br> ଅନୁଚ୍ଛେଦ ଅନୁସାରେ, ସାମାଜିକ ଅବିଚାରର ମୂଳ କାରଣ କ’ଣ ବୋଲି ଦର୍ଶାଯାଇଛି?",
+ o:[
+   "ଅତ୍ୟଧିକ ଶିକ୍ଷା ଓ ସଚେତନତା",
+   "ସମ୍ପଦର ଅସମାନ ବଣ୍ଟନ ଓ ସୁଯୋଗର ଅଭାବ",
+   "ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ ଆଇନଗତ ସୁରକ୍ଷା",
+   "କେବଳ ରାଜନୈତିକ ଦଳଗୁଡ଼ିକର ସଂଖ୍ୟା ବୃଦ୍ଧି"
+ ],
+ a:1,
+ exp:"Answer Refers to Passage"
+},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଅତି ଗଭୀର ଭାବେ ପଢ଼ନ୍ତୁ ଏବଂ ପ୍ରଶ୍ନଗୁଡ଼ିକର ଉପଯୁକ୍ତ ଉତ୍ତର ଚୟନ କରନ୍ତୁ।<br><br>ସାମାଜିକ ଅବିଚାର ହେଉଛି ମାନବ ସଭ୍ୟତା ପାଇଁ ଏକ ଅଭିଶାପ, ଯାହା ସମାଜର ବିଭିନ୍ନ ସ୍ତରରେ ପ୍ରଚ୍ଛନ୍ନ କିମ୍ବା ପ୍ରକଟ ଭାବେ ବିଦ୍ୟମାନ। ଏହା ମୁଖ୍ୟତଃ ସମ୍ପଦର ଅସମାନ ବଣ୍ଟନ, ସୁଯୋଗର ଅଭାବ ଏବଂ କେତେକ ନିର୍ଦ୍ଦିଷ୍ଟ ଗୋଷ୍ଠୀ ପ୍ରତି ବୈଷମ୍ୟମୂଳକ ଆଚରଣରୁ ସୃଷ୍ଟି ହୋଇଥାଏ। ଯେତେବେଳେ ସମାଜର ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ବର୍ଗ ସେମାନଙ୍କର ମୌଳିକ ମାନବାଧିକାରରୁ ବଞ୍ଚିତ ହୁଅନ୍ତି ଏବଂ ଶକ୍ତିଶାଳୀ ଗୋଷ୍ଠୀ ଦ୍ୱାରା ଶୋଷିତ ହୁଅନ୍ତି, ସେତେବେଳେ ସାମାଜିକ ଅବିଚାରର ମୂଳଦୁଆ ସୁଦୃଢ଼ ହୁଏ। ଜାତିଗତ ଭେଦଭାବ, ଲିଙ୍ଗଗତ ଅସମାନତା ଏବଂ ଆର୍ଥିକ ଦୂରବସ୍ଥା ଏହାର ଜ୍ୱଳନ୍ତ ଉଦାହରଣ। ଏହା କେବଳ ବ୍ୟକ୍ତିବିଶେଷଙ୍କୁ ପ୍ରଭାବିତ କରେ ନାହିଁ, ବରଂ ଦେଶର ସାମୂହିକ ପ୍ରଗତିକୁ ମଧ୍ୟ ବାଧାପ୍ରାପ୍ତ କରିଥାଏ। ରାଜନୈତିକ ସ୍ୱାର୍ଥସାଧନ ପାଇଁ ଅନେକ ସମୟରେ ଏହି ବିଭେଦକୁ ଅଧିକ ତୀବ୍ର କରାଯାଇଥାଏ, ଯାହା ସାମାଜିକ ସଂହତିକୁ ନଷ୍ଟ କରିଦିଏ।<br>ଅନ୍ୟପକ୍ଷରେ, ଏହି ଅବିଚାର ବିରୁଦ୍ଧରେ ସ୍ୱର ଉତ୍ତୋଳନ କରିବା ଏବଂ ନ୍ୟାୟ ପ୍ରତିଷ୍ଠା କରିବା ପାଇଁ ସାମ୍ବିଧାନିକ ବ୍ୟବସ୍ଥା ଓ ସାମାଜିକ ଜାଗରଣର ଅପରିହାର୍ଯ୍ୟତା ରହିଛି। ଶିକ୍ଷାର ପ୍ରସାର ଏବଂ ସଚେତନତା ମାଧ୍ୟମରେ ହିଁ ଏହି ମାନସିକତାକୁ ପରିବର୍ତ୍ତନ କରାଯାଇପାରିବ। ଯେପର୍ଯ୍ୟନ୍ତ ସମାଜର ସବୁଠାରୁ ଦୁର୍ବଳ ବର୍ଗର ବ୍ୟକ୍ତି ନିଜକୁ ସୁରକ୍ଷିତ ଏବଂ ସମ୍ମାନିତ ମନେ ନକରିଛି, ସେପର୍ଯ୍ୟନ୍ତ ଏକ ଆଦର୍ଶ ସମାଜର ପରିକଳ୍ପନା ଅସମ୍ପୂର୍ଣ୍ଣ। ସାମାଜିକ ନ୍ୟାୟର ପ୍ରକୃତ ଅର୍ଥ ହେଉଛି ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ ଆଇନଗତ ସୁରକ୍ଷା ଏବଂ ଗୌରବମୟ ଜୀବନ ଯାପନର ଅଧିକାର। ଏଥିପାଇଁ ପ୍ରତ୍ୟେକ ନାଗରିକଙ୍କର ନୈତିକ ଦାୟିତ୍ୱ ରହିଛି ଯେ ସେମାନେ ଅନ୍ୟାୟ ବିରୁଦ୍ଧରେ ସଂଗ୍ରାମ କରନ୍ତୁ ଏବଂ ଏକ ସମତାଭିତ୍ତିକ ସମାଜ ଗଠନରେ ସହାୟକ ହୁଅନ୍ତୁ।</span><br><br> ଏହି ଅନୁଚ୍ଛେଦର ସ୍ୱର କିପରି ଅଟେ?",
+ o:[
+   "ବ୍ୟଙ୍ଗାତ୍ମକ ଓ ହାସ୍ୟରସାତ୍ମକ",
+   "ସମାଲୋଚନାତ୍ମକ ଓ ସଂସ୍କାରଧର୍ମୀ",
+   "କେବଳ କାଳ୍ପନିକ ବର୍ଣ୍ଣନା",
+   "ଭବିଷ୍ୟବାଣୀ ସଦୃଶ"
+ ],
+ a:1,
+ exp:"Answer Refers to Passage"
+}
+
+
+    
+
+
+
+
+    
+];
+/* ===== End questions with explanations ===== */
+
+let answers={}, index=0, timeLeft, timerInt;
+
+window.onload = () => {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(saved){
+    if(saved.answers) answers = saved.answers; // restore previous answers
+    showScore(saved);
+  } else {
+    loader.classList.add("hidden");
+    instruction.classList.remove("hidden");
+  }
+};
+
+function startTest(){
+  instruction.classList.add("hidden");
+  test.classList.remove("hidden");
+  timeLeft=TEST_DURATION_MINUTES*60;
+  timerInt=setInterval(runTimer,1000);
+  buildGrid();loadQ();
+}
+
+function runTimer(){
+  if(timeLeft<=0){submitTest();return;}
+  timeLeft--;
+  timer.innerText=`${String(Math.floor(timeLeft/60)).padStart(2,"0")}:${String(timeLeft%60).padStart(2,"0")}`;
+}
+
+function loadQ(){
+  const q = questions[index];
+  question.innerHTML = (index + 1) + ". " + q.q;
+
+  /* ===== IMAGE LOGIC ===== */
+  imgWrap.classList.add("hidden");
+  qImg.style.display = "none";
+  imgLoader.style.display = "block";
+
+  if(q.img){
+    imgWrap.classList.remove("hidden");
+    qImg.src = q.img;
+
+    qImg.onload = () => {
+      imgLoader.style.display = "none";
+      qImg.style.display = "block";
+    };
+
+    qImg.onerror = () => {
+      imgWrap.classList.add("hidden");
+    };
+  }
+
+  options.innerHTML="";
+  q.o.forEach((t,i)=>{
+    const d=document.createElement("div");
+    d.className="option"+(answers[index]===i?" selected":"");
+    d.innerText=t;
+    d.onclick=()=>{
+      answers[index]=answers[index]===i?null:i;
+
+      /* ===== Save answers to localStorage ===== */
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      saved.answers = answers;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      /* ===== End save ===== */
+
+      loadQ();
+      updateGrid();
+    };
+    options.appendChild(d);
+  });
+
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === questions.length - 1;
+}
+
+function nextQ(){index++;loadQ();}
+function prevQ(){index--;loadQ();}
+
+function buildGrid(){
+  grid.innerHTML="";
+  questions.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.innerText=i+1;
+    d.onclick=()=>{index=i;loadQ();};
+    grid.appendChild(d);
+  });
+}
+
+function updateGrid(){
+  [...grid.children].forEach((d,i)=>d.classList.toggle("attempted",answers[i]!=null));
+}
+
+function submitTest(){
+  clearInterval(timerInt);
+  test.classList.add("hidden");
+  loader.classList.remove("hidden");
+  loader.querySelector("p").innerText="Saving score & calculating rank…";
+
+  let correct=0,wrong=0;
+  questions.forEach((q,i)=>{
+    if(answers[i]==null)return;
+    answers[i]===q.a?correct++:wrong++;
+  });
+
+  const score=+(correct-wrong*NEGATIVE_MARK).toFixed(2);
+
+  const baseData={
+    phone:user.phone,
+    name:user.name,
+    score,correct,wrong,
+    unattempted:questions.length-correct-wrong,
+    updatedAt:Date.now()
+  };
+
+  db.collection("tests").doc(TEST_ID).collection("results").doc(user.phone)
+  .set(baseData,{merge:true})
+  .then(()=>calculateRank(baseData));
+}
+
+function calculateRank(myData){
+  db.collection("tests").doc(TEST_ID).collection("results").get()
+  .then(snap=>{
+    const arr=snap.docs.map(d=>({...d.data(),id:d.id}));
+    arr.sort((a,b)=>b.score-a.score);
+    const rank=arr.findIndex(x=>x.id===user.phone)+1;
+    myData.rankText=`${rank} / ${arr.length}`;
+    myData.answers=answers;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(myData));
+    showScore(myData);
+  });
+}
+
+function showScore(r){
+  loader.classList.add("hidden");
+  score.classList.remove("hidden");
+  userScore.innerText=`Hi ${r.name}, your score is ${r.score}`;
+  stats.innerHTML=`Correct: ${r.correct}<br>Wrong: ${r.wrong}<br>Unattempted: ${r.unattempted}<br><b>Rank: ${r.rankText}</b>`;
+  filterQ("all",document.querySelector(".filter button"));
+}
+
+function filterQ(type,btn){
+  document.querySelectorAll(".filter button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  review.innerHTML="";
+  questions.forEach((q,i)=>{
+    const a=answers[i];
+    if(type==="correct"&&a!==q.a)return;
+    if(type==="wrong"&&(a==null||a===q.a))return;
+    if(type==="unattempted"&&a!=null)return;
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <b>${q.q}</b><br>
+      Your: ${a!=null?q.o[a]:"—"}<br>
+      Correct: ${q.o[q.a]}<br>
+      <details>
+        <summary>Show Explanation</summary>
+        <p>${q.exp || "No explanation provided."}</p>
+      </details>
+    `;
+    review.appendChild(c);
+  });
+}
+
+function reattempt(){popup.style.display="flex";}
+function confirmReattempt(){localStorage.removeItem(STORAGE_KEY);location.reload();}
+</script>
+</body>
+</html>
