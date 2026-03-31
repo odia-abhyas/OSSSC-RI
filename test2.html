@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odia Abhyas</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  .q-image-wrap{margin:12px 0;display:flex;justify-content:center;align-items:center}
+  .img-loader{width:50px;height:50px;border:5px solid #ddd;border-top:5px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  .q-image{max-width:100%;border-radius:12px;display:none}
+  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{margin:0;background:#f4f6f8;padding:0}
+  .loader{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+  .circle{width:70px;height:70px;border:7px solid #ddd;border-top:7px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hidden{display:none}
+  .header{background:#fff;padding:12px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd}
+  .container{padding:14px}
+  button{padding:12px;border:none;border-radius:10px;background:#2c5364;color:#fff;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.4}
+  .q-inst{font-size:14px}
+  .question{font-weight:bold;margin:8px 0}
+  .option{background:#fff;border:1px solid #ccc;padding:12px;border-radius:10px;margin-bottom:10px;cursor:pointer}
+  .option.selected{background:#e8f1f5;border-color:#2c5364}
+  .nav{display:flex;justify-content:space-between;margin:10px 0}
+  .grid{display:flex;flex-wrap:wrap;gap:6px}
+  .grid div{width:32px;height:32px;border:1px solid #2c5364;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .grid .attempted{background:#2c5364;color:#fff;border-radius:50%}
+  .score{padding:16px}
+  .card{background:#fff;padding:12px;border-radius:12px;margin-bottom:10px}
+  .filter{display:flex;gap:6px;margin-top:10px}
+  .filter button{flex:1;background:#ccc;color:#000}
+  .filter .active{background:#2c5364;color:#fff}
+  .popup{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center}
+  .popup-box{background:#fff;padding:18px;border-radius:14px;width:85%;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="loader" class="loader">
+  <div class="circle"></div>
+  <p>Checking user…</p>
+</div>
+
+<div id="instruction" class="hidden container">
+  <h3>OSSSC RI Odia Sectional - 2</h3>
+  <ul>
+    <li>Time: 20 Minutes</li>
+      <li>Total Questions: 20 </li>
+    <li>Negative Marking: 0.25 per wrong answer</li>
+    <li>Submit anytime</li>
+  </ul>
+  <button onclick="startTest()">Start Test</button>
+</div>
+
+<div id="test" class="hidden">
+  <div class="header">
+    <b></b>
+      <div class="q-inst">OSSSC RI Odia Sectional - 2</div>
+    <span id="timer">20:00</span>
+  </div>
+  <div class="container">
+    
+    
+
+    <div id="imgWrap" class="q-image-wrap hidden">
+      <div id="imgLoader" class="img-loader"></div>
+      <img id="qImg" class="q-image">
+    </div>
+<div class="question" id="question"></div>
+    <div id="options"></div>
+
+    <div class="nav">
+      <button id="prevBtn" onclick="prevQ()">Previous</button>
+      <button id="nextBtn" onclick="nextQ()">Next</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <br>
+    <button onclick="submitTest()">Submit Test</button>
+  </div>
+</div>
+
+<div id="score" class="hidden score">
+  <h3>OSSSC RI Odia Sectional - 2</h3>
+  <p id="userScore"></p>
+  <div class="card" id="stats"></div>
+
+  <div class="filter">
+    <button class="active" onclick="filterQ('all',this)">All</button>
+    <button onclick="filterQ('correct',this)">Correct</button>
+    <button onclick="filterQ('wrong',this)">Wrong</button>
+    <button onclick="filterQ('unattempted',this)">Unattempted</button>
+  </div>
+
+  <div id="review"></div>
+  <br>
+  <button onclick="reattempt()">Reattempt</button>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-box">
+    <p>Your previous score & rank will be replaced.</p>
+    <button onclick="confirmReattempt()">OK</button>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+apiKey: "AIzaSyAm8LD9iSm24vG2rc_bBSjXuATXxs7-lbE",
+  authDomain: "odia-abhyas.firebaseapp.com",
+  projectId: "odia-abhyas"
+});
+const db = firebase.firestore();
+
+const TEST_ID = "OSSSC RI Odia Sectional - 2";
+const STORAGE_KEY = "RESULT_" + TEST_ID;
+const TEST_DURATION_MINUTES = 20;
+const NEGATIVE_MARK = 0.25;
+
+const user = {
+  phone: localStorage.getItem("user_phone"),
+  name: localStorage.getItem("user_name")
+};
+if(!user.phone){ alert("Login required"); throw ""; }
+
+/* ===== Added explanations to questions ===== */
+const questions = [
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ବର୍ତ୍ତମାନର ବିଶ୍ୱାୟନ ଯୁଗରେ କୌଣସି ବି ଦେଶର ଅର୍ଥନୈତିକ ସମୃଦ୍ଧି ତାହାର ବୈଦେଶିକ ବାଣିଜ୍ୟ ଉପରେ ନିର୍ଭର କରେ। ଭାରତ ପାଇଁ ରପ୍ତାନି ଏବଂ ଆମଦାନୀ କେବଳ ବାଣିଜ୍ୟିକ କାରବାର ନୁହେଁ, ବରଂ ଏହା ଦେଶର ଜିଡିପି (GDP) ଅଭିବୃଦ୍ଧିର ଏକ ପ୍ରମୁଖ ଚାଳକ। ଭାରତର ରପ୍ତାନି ଟ୍ରେଣ୍ଡକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ପାରମ୍ପରିକ ଦ୍ରବ୍ୟ ଅପେକ୍ଷା ଏବେ ସେବା କ୍ଷେତ୍ର (Service Sector) ଏବଂ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ଭିତ୍ତିକ ଦ୍ରବ୍ୟର ରପ୍ତାନି ବୃଦ୍ଧି ପାଇଛି। ବିଶେଷ କରି ସଫ୍ଟୱେର ସେବା, ଔଷଧ (Pharmaceuticals) ଏବଂ କୃଷିଜାତ ଦ୍ରବ୍ୟ ବିଶ୍ୱ ବଜାରରେ ଭାରତର ସ୍ୱତନ୍ତ୍ର ପରିଚୟ ସୃଷ୍ଟି କରିଛି। 'ମେକ୍ ଇନ୍ ଇଣ୍ଡିଆ' ଭଳି ଅଭିଯାନ ଦେଶର ଉତ୍ପାଦନ କ୍ଷମତା ବୃଦ୍ଧି କରି ରପ୍ତାନିକୁ ଏକ ନୂତନ ଦିଗ ଦେଇଛି।<br><br>ଅପରପକ୍ଷରେ, ଆମଦାନୀ କ୍ଷେତ୍ରରେ ଭାରତ ଅନେକାଂଶରେ ଅଶୋଧିତ ତୈଳ, ସୁନା ଏବଂ ଇଲେକ୍ଟ୍ରୋନିକ୍ସ ସାମଗ୍ରୀ ଉପରେ ନିର୍ଭରଶୀଳ। ଶକ୍ତି ଆବଶ୍ୟକତା ପୂରଣ ପାଇଁ ବିପୁଳ ପରିମାଣର ବୈଦେଶିକ ମୁଦ୍ରା ଅଶୋଧିତ ତୈଳ ଆମଦାନୀରେ ବ୍ୟୟ ହୋଇଥାଏ, ଯାହା ଦେଶର ଚଳନ୍ତି ଖାତା ନିଅଣ୍ଟ (Current Account Deficit) ଉପରେ ପ୍ରଭାବ ପକାଇଥାଏ। ଏହି ନିଅଣ୍ଟକୁ ସନ୍ତୁଳିତ କରିବା ପାଇଁ ସରକାର ସ୍ଥାନୀୟ ଉତ୍ପାଦନକୁ ପ୍ରୋତ୍ସାହନ ଦେବା ସହ ଆତ୍ମନିର୍ଭରଶୀଳତା ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ବାଣିଜ୍ୟିକ ନୀତିରେ ପରିବର୍ତ୍ତନ ଏବଂ ବିଭିନ୍ନ ଦେଶ ସହିତ ମୁକ୍ତ ବାଣିଜ୍ୟ ଚୁକ୍ତି (FTA) ସ୍ୱାକ୍ଷର କରି ଭାରତ ନିଜର ବାଣିଜ୍ୟିକ ସୀମାକୁ ପ୍ରସାରିତ କରୁଛି। ତଥାପି, ବିଶ୍ୱ ବଜାରରେ ମୁଦ୍ରାସ୍ଫୀତି ଏବଂ ଭୂ-ରାଜନୈତିକ ଅସ୍ଥିରତା ଭାରତର ବୈଦେଶିକ ବାଣିଜ୍ୟ ପାଇଁ ସର୍ବଦା ଏକ ବଡ଼ ପ୍ରତିବନ୍ଧକ ଭାବେ ଉଭା ହୋଇଛି।</span><br><br> ଭାରତର ଚଳନ୍ତି ଖାତା ନିଅଣ୍ଟ (Current Account Deficit) ବୃଦ୍ଧି ପାଇବାର ମୁଖ୍ୟ କାରଣ କ’ଣ?",
+ o:['ସଫ୍ଟୱେର ସେବାର ଅତ୍ୟଧିକ ରପ୍ତାନି','ବିଶ୍ୱ ବଜାରରେ ଔଷଧର ଚାହିଦା କମିବା','ଅଶୋଧିତ ତୈଳ ଏବଂ ମୂଲ୍ୟବାନ ଧାତୁର ବହୁଳ ଆମଦାନୀ','କୃଷିଜାତ ଦ୍ରବ୍ୟର ସ୍ଥାନୀୟ ବ୍ୟବହାର ବୃଦ୍ଧି'],
+ a:2,
+ exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ବର୍ତ୍ତମାନର ବିଶ୍ୱାୟନ ଯୁଗରେ କୌଣସି ବି ଦେଶର ଅର୍ଥନୈତିକ ସମୃଦ୍ଧି ତାହାର ବୈଦେଶିକ ବାଣିଜ୍ୟ ଉପରେ ନିର୍ଭର କରେ। ଭାରତ ପାଇଁ ରପ୍ତାନି ଏବଂ ଆମଦାନୀ କେବଳ ବାଣିଜ୍ୟିକ କାରବାର ନୁହେଁ, ବରଂ ଏହା ଦେଶର ଜିଡିପି (GDP) ଅଭିବୃଦ୍ଧିର ଏକ ପ୍ରମୁଖ ଚାଳକ। ଭାରତର ରପ୍ତାନି ଟ୍ରେଣ୍ଡକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ପାରମ୍ପରିକ ଦ୍ରବ୍ୟ ଅପେକ୍ଷା ଏବେ ସେବା କ୍ଷେତ୍ର (Service Sector) ଏବଂ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ଭିତ୍ତିକ ଦ୍ରବ୍ୟର ରପ୍ତାନି ବୃଦ୍ଧି ପାଇଛି। ବିଶେଷ କରି ସଫ୍ଟୱେର ସେବା, ଔଷଧ (Pharmaceuticals) ଏବଂ କୃଷିଜାତ ଦ୍ରବ୍ୟ ବିଶ୍ୱ ବଜାରରେ ଭାରତର ସ୍ୱତନ୍ତ୍ର ପରିଚୟ ସୃଷ୍ଟି କରିଛି। 'ମେକ୍ ଇନ୍ ଇଣ୍ଡିଆ' ଭଳି ଅଭିଯାନ ଦେଶର ଉତ୍ପାଦନ କ୍ଷମତା ବୃଦ୍ଧି କରି ରପ୍ତାନିକୁ ଏକ ନୂତନ ଦିଗ ଦେଇଛି।<br><br>ଅପରପକ୍ଷରେ, ଆମଦାନୀ କ୍ଷେତ୍ରରେ ଭାରତ ଅନେକାଂଶରେ ଅଶୋଧିତ ତୈଳ, ସୁନା ଏବଂ ଇଲେକ୍ଟ୍ରୋନିକ୍ସ ସାମଗ୍ରୀ ଉପରେ ନିର୍ଭରଶୀଳ। ଶକ୍ତି ଆବଶ୍ୟକତା ପୂରଣ ପାଇଁ ବିପୁଳ ପରିମାଣର ବୈଦେଶିକ ମୁଦ୍ରା ଅଶୋଧିତ ତୈଳ ଆମଦାନୀରେ ବ୍ୟୟ ହୋଇଥାଏ, ଯାହା ଦେଶର ଚଳନ୍ତି ଖାତା ନିଅଣ୍ଟ (Current Account Deficit) ଉପରେ ପ୍ରଭାବ ପକାଇଥାଏ। ଏହି ନିଅଣ୍ଟକୁ ସନ୍ତୁଳିତ କରିବା ପାଇଁ ସରକାର ସ୍ଥାନୀୟ ଉତ୍ପାଦନକୁ ପ୍ରୋତ୍ସାହନ ଦେବା ସହ ଆତ୍ମନିର୍ଭରଶୀଳତା ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ବାଣିଜ୍ୟିକ ନୀତିରେ ପରିବର୍ତ୍ତନ ଏବଂ ବିଭିନ୍ନ ଦେଶ ସହିତ ମୁକ୍ତ ବାଣିଜ୍ୟ ଚୁକ୍ତି (FTA) ସ୍ୱାକ୍ଷର କରି ଭାରତ ନିଜର ବାଣିଜ୍ୟିକ ସୀମାକୁ ପ୍ରସାରିତ କରୁଛି। ତଥାପି, ବିଶ୍ୱ ବଜାରରେ ମୁଦ୍ରାସ୍ଫୀତି ଏବଂ ଭୂ-ରାଜନୈତିକ ଅସ୍ଥିରତା ଭାରତର ବୈଦେଶିକ ବାଣିଜ୍ୟ ପାଇଁ ସର୍ବଦା ଏକ ବଡ଼ ପ୍ରତିବନ୍ଧକ ଭାବେ ଉଭା ହୋଇଛି। </span><br><br>ଏହି ଅନୁଚ୍ଛେଦ ଅନୁଯାୟୀ, କେଉଁ ଅଭିଯାନ ଭାରତର ରପ୍ତାନି କ୍ଷମତା ବୃଦ୍ଧିରେ ସହାୟକ ହୋଇଛି?",
+ o:['ସ୍ୱଚ୍ଛ ଭାରତ ଅଭିଯାନ','ମେକ୍ ଇନ୍ ଇଣ୍ଡିଆ','ଡିଜିଟାଲ୍ ଇଣ୍ଡିଆ','ସର୍ବ ଶିକ୍ଷା ଅଭିଯାନ'],
+ a:1,
+ exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ବର୍ତ୍ତମାନର ବିଶ୍ୱାୟନ ଯୁଗରେ କୌଣସି ବି ଦେଶର ଅର୍ଥନୈତିକ ସମୃଦ୍ଧି ତାହାର ବୈଦେଶିକ ବାଣିଜ୍ୟ ଉପରେ ନିର୍ଭର କରେ। ଭାରତ ପାଇଁ ରପ୍ତାନି ଏବଂ ଆମଦାନୀ କେବଳ ବାଣିଜ୍ୟିକ କାରବାର ନୁହେଁ, ବରଂ ଏହା ଦେଶର ଜିଡିପି (GDP) ଅଭିବୃଦ୍ଧିର ଏକ ପ୍ରମୁଖ ଚାଳକ। ଭାରତର ରପ୍ତାନି ଟ୍ରେଣ୍ଡକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ପାରମ୍ପରିକ ଦ୍ରବ୍ୟ ଅପେକ୍ଷା ଏବେ ସେବା କ୍ଷେତ୍ର (Service Sector) ଏବଂ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ଭିତ୍ତିକ ଦ୍ରବ୍ୟର ରପ୍ତାନି ବୃଦ୍ଧି ପାଇଛି। ବିଶେଷ କରି ସଫ୍ଟୱେର ସେବା, ଔଷଧ (Pharmaceuticals) ଏବଂ କୃଷିଜାତ ଦ୍ରବ୍ୟ ବିଶ୍ୱ ବଜାରରେ ଭାରତର ସ୍ୱତନ୍ତ୍ର ପରିଚୟ ସୃଷ୍ଟି କରିଛି। 'ମେକ୍ ଇନ୍ ଇଣ୍ଡିଆ' ଭଳି ଅଭିଯାନ ଦେଶର ଉତ୍ପାଦନ କ୍ଷମତା ବୃଦ୍ଧି କରି ରପ୍ତାନିକୁ ଏକ ନୂତନ ଦିଗ ଦେଇଛି।<br><br>ଅପରପକ୍ଷରେ, ଆମଦାନୀ କ୍ଷେତ୍ରରେ ଭାରତ ଅନେକାଂଶରେ ଅଶୋଧିତ ତୈଳ, ସୁନା ଏବଂ ଇଲେକ୍ଟ୍ରୋନିକ୍ସ ସାମଗ୍ରୀ ଉପରେ ନିର୍ଭରଶୀଳ। ଶକ୍ତି ଆବଶ୍ୟକତା ପୂରଣ ପାଇଁ ବିପୁଳ ପରିମାଣର ବୈଦେଶିକ ମୁଦ୍ରା ଅଶୋଧିତ ତୈଳ ଆମଦାନୀରେ ବ୍ୟୟ ହୋଇଥାଏ, ଯାହା ଦେଶର ଚଳନ୍ତି ଖାତା ନିଅଣ୍ଟ (Current Account Deficit) ଉପରେ ପ୍ରଭାବ ପକାଇଥାଏ। ଏହି ନିଅଣ୍ଟକୁ ସନ୍ତୁଳିତ କରିବା ପାଇଁ ସରକାର ସ୍ଥାନୀୟ ଉତ୍ପାଦନକୁ ପ୍ରୋତ୍ସାହନ ଦେବା ସହ ଆତ୍ମନିର୍ଭରଶୀଳତା ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ବାଣିଜ୍ୟିକ ନୀତିରେ ପରିବର୍ତ୍ତନ ଏବଂ ବିଭିନ୍ନ ଦେଶ ସହିତ ମୁକ୍ତ ବାଣିଜ୍ୟ ଚୁକ୍ତି (FTA) ସ୍ୱାକ୍ଷର କରି ଭାରତ ନିଜର ବାଣିଜ୍ୟିକ ସୀମାକୁ ପ୍ରସାରିତ କରୁଛି। ତଥାପି, ବିଶ୍ୱ ବଜାରରେ ମୁଦ୍ରାସ୍ଫୀତି ଏବଂ ଭୂ-ରାଜନୈତିକ ଅସ୍ଥିରତା ଭାରତର ବୈଦେଶିକ ବାଣିଜ୍ୟ ପାଇଁ ସର୍ବଦା ଏକ ବଡ଼ ପ୍ରତିବନ୍ଧକ ଭାବେ ଉଭା ହୋଇଛି। </span><br><br>ଅନୁଚ୍ଛେଦରେ ଉଲ୍ଲେଖ ଥିବା 'ବୈଦେଶିକ ବାଣିଜ୍ୟ ପାଇଁ ପ୍ରତିବନ୍ଧକ' ଗୁଡ଼ିକ କେଉଁଟି?",
+ o:['ମୁକ୍ତ ବାଣିଜ୍ୟ ଚୁକ୍ତି ସ୍ୱାକ୍ଷର କରିବା','ବିଶ୍ୱ ବଜାରରେ ମୁଦ୍ରାସ୍ଫୀତି ଏବଂ ଭୂ-ରାଜନୈତିକ ଅସ୍ଥିରତା','ସେବା କ୍ଷେତ୍ରରେ ଅଭିବୃଦ୍ଧି ଘଟିବା','ବୈଦେଶିକ ମୁଦ୍ରା ଭଣ୍ଡାର ବୃଦ୍ଧି ପାଇବା'],
+ a:1,
+ exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ବର୍ତ୍ତମାନର ବିଶ୍ୱାୟନ ଯୁଗରେ କୌଣସି ବି ଦେଶର ଅର୍ଥନୈତିକ ସମୃଦ୍ଧି ତାହାର ବୈଦେଶିକ ବାଣିଜ୍ୟ ଉପରେ ନିର୍ଭର କରେ। ଭାରତ ପାଇଁ ରପ୍ତାନି ଏବଂ ଆମଦାନୀ କେବଳ ବାଣିଜ୍ୟିକ କାରବାର ନୁହେଁ, ବରଂ ଏହା ଦେଶର ଜିଡିପି (GDP) ଅଭିବୃଦ୍ଧିର ଏକ ପ୍ରମୁଖ ଚାଳକ। ଭାରତର ରପ୍ତାନି ଟ୍ରେଣ୍ଡକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ପାରମ୍ପରିକ ଦ୍ରବ୍ୟ ଅପେକ୍ଷା ଏବେ ସେବା କ୍ଷେତ୍ର (Service Sector) ଏବଂ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ଭିତ୍ତିକ ଦ୍ରବ୍ୟର ରପ୍ତାନି ବୃଦ୍ଧି ପାଇଛି। ବିଶେଷ କରି ସଫ୍ଟୱେର ସେବା, ଔଷଧ (Pharmaceuticals) ଏବଂ କୃଷିଜାତ ଦ୍ରବ୍ୟ ବିଶ୍ୱ ବଜାରରେ ଭାରତର ସ୍ୱତନ୍ତ୍ର ପରିଚୟ ସୃଷ୍ଟି କରିଛି। 'ମେକ୍ ଇନ୍ ଇଣ୍ଡିଆ' ଭଳି ଅଭିଯାନ ଦେଶର ଉତ୍ପାଦନ କ୍ଷମତା ବୃଦ୍ଧି କରି ରପ୍ତାନିକୁ ଏକ ନୂତନ ଦିଗ ଦେଇଛି।<br><br>ଅପରପକ୍ଷରେ, ଆମଦାନୀ କ୍ଷେତ୍ରରେ ଭାରତ ଅନେକାଂଶରେ ଅଶୋଧିତ ତୈଳ, ସୁନା ଏବଂ ଇଲେକ୍ଟ୍ରୋନିକ୍ସ ସାମଗ୍ରୀ ଉପରେ ନିର୍ଭରଶୀଳ। ଶକ୍ତି ଆବଶ୍ୟକତା ପୂରଣ ପାଇଁ ବିପୁଳ ପରିମାଣର ବୈଦେଶିକ ମୁଦ୍ରା ଅଶୋଧିତ ତୈଳ ଆମଦାନୀରେ ବ୍ୟୟ ହୋଇଥାଏ, ଯାହା ଦେଶର ଚଳନ୍ତି ଖାତା ନିଅଣ୍ଟ (Current Account Deficit) ଉପରେ ପ୍ରଭାବ ପକାଇଥାଏ। ଏହି ନିଅଣ୍ଟକୁ ସନ୍ତୁଳିତ କରିବା ପାଇଁ ସରକାର ସ୍ଥାନୀୟ ଉତ୍ପାଦନକୁ ପ୍ରୋତ୍ସାହନ ଦେବା ସହ ଆତ୍ମନିର୍ଭରଶୀଳତା ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ବାଣିଜ୍ୟିକ ନୀତିରେ ପରିବର୍ତ୍ତନ ଏବଂ ବିଭିନ୍ନ ଦେଶ ସହିତ ମୁକ୍ତ ବାଣିଜ୍ୟ ଚୁକ୍ତି (FTA) ସ୍ୱାକ୍ଷର କରି ଭାରତ ନିଜର ବାଣିଜ୍ୟିକ ସୀମାକୁ ପ୍ରସାରିତ କରୁଛି। ତଥାପି, ବିଶ୍ୱ ବଜାରରେ ମୁଦ୍ରାସ୍ଫୀତି ଏବଂ ଭୂ-ରାଜନୈତିକ ଅସ୍ଥିରତା ଭାରତର ବୈଦେଶିକ ବାଣିଜ୍ୟ ପାଇଁ ସର୍ବଦା ଏକ ବଡ଼ ପ୍ରତିବନ୍ଧକ ଭାବେ ଉଭା ହୋଇଛି। </span><br><br>ଏହି ଅନୁଚ୍ଛେଦର ମୁଖ୍ୟ ଧାରଣା କ’ଣ ଅଟେ?",
+ o:['କେବଳ ସୁନା ଆମଦାନୀ ଉପରେ କଟକଣା ଲଗାଇବା','ଭାରତର ରପ୍ତାନି-ଆମଦାନୀର ସ୍ଥିତି ଏବଂ ଅର୍ଥନୈତିକ ସନ୍ତୁଳନ','ବିଦେଶୀ ପର୍ଯ୍ୟଟକଙ୍କୁ ଭାରତ ପ୍ରତି ଆକୃଷ୍ଟ କରିବା','କେବଳ କୃଷି କ୍ଷେତ୍ରର ସମସ୍ୟା ବିଷୟରେ ଆଲୋଚନା କରିବା'],
+ a:1,
+ exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ବର୍ତ୍ତମାନର ବିଶ୍ୱାୟନ ଯୁଗରେ କୌଣସି ବି ଦେଶର ଅର୍ଥନୈତିକ ସମୃଦ୍ଧି ତାହାର ବୈଦେଶିକ ବାଣିଜ୍ୟ ଉପରେ ନିର୍ଭର କରେ। ଭାରତ ପାଇଁ ରପ୍ତାନି ଏବଂ ଆମଦାନୀ କେବଳ ବାଣିଜ୍ୟିକ କାରବାର ନୁହେଁ, ବରଂ ଏହା ଦେଶର ଜିଡିପି (GDP) ଅଭିବୃଦ୍ଧିର ଏକ ପ୍ରମୁଖ ଚାଳକ। ଭାରତର ରପ୍ତାନି ଟ୍ରେଣ୍ଡକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ପାରମ୍ପରିକ ଦ୍ରବ୍ୟ ଅପେକ୍ଷା ଏବେ ସେବା କ୍ଷେତ୍ର (Service Sector) ଏବଂ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ଭିତ୍ତିକ ଦ୍ରବ୍ୟର ରପ୍ତାନି ବୃଦ୍ଧି ପାଇଛି। ବିଶେଷ କରି ସଫ୍ଟୱେର ସେବା, ଔଷଧ (Pharmaceuticals) ଏବଂ କୃଷିଜାତ ଦ୍ରବ୍ୟ ବିଶ୍ୱ ବଜାରରେ ଭାରତର ସ୍ୱତନ୍ତ୍ର ପରିଚୟ ସୃଷ୍ଟି କରିଛି। 'ମେକ୍ ଇନ୍ ଇଣ୍ଡିଆ' ଭଳି ଅଭିଯାନ ଦେଶର ଉତ୍ପାଦନ କ୍ଷମତା ବୃଦ୍ଧି କରି ରପ୍ତାନିକୁ ଏକ ନୂତନ ଦିଗ ଦେଇଛି।<br><br>ଅପରପକ୍ଷରେ, ଆମଦାନୀ କ୍ଷେତ୍ରରେ ଭାରତ ଅନେକାଂଶରେ ଅଶୋଧିତ ତୈଳ, ସୁନା ଏବଂ ଇଲେକ୍ଟ୍ରୋନିକ୍ସ ସାମଗ୍ରୀ ଉପରେ ନିର୍ଭରଶୀଳ। ଶକ୍ତି ଆବଶ୍ୟକତା ପୂରଣ ପାଇଁ ବିପୁଳ ପରିମାଣର ବୈଦେଶିକ ମୁଦ୍ରା ଅଶୋଧିତ ତୈଳ ଆମଦାନୀରେ ବ୍ୟୟ ହୋଇଥାଏ, ଯାହା ଦେଶର ଚଳନ୍ତି ଖାତା ନିଅଣ୍ଟ (Current Account Deficit) ଉପରେ ପ୍ରଭାବ ପକାଇଥାଏ। ଏହି ନିଅଣ୍ଟକୁ ସନ୍ତୁଳିତ କରିବା ପାଇଁ ସରକାର ସ୍ଥାନୀୟ ଉତ୍ପାଦନକୁ ପ୍ରୋତ୍ସାହନ ଦେବା ସହ ଆତ୍ମନିର୍ଭରଶୀଳତା ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ବାଣିଜ୍ୟିକ ନୀତିରେ ପରିବର୍ତ୍ତନ ଏବଂ ବିଭିନ୍ନ ଦେଶ ସହିତ ମୁକ୍ତ ବାଣିଜ୍ୟ ଚୁକ୍ତି (FTA) ସ୍ୱାକ୍ଷର କରି ଭାରତ ନିଜର ବାଣିଜ୍ୟିକ ସୀମାକୁ ପ୍ରସାରିତ କରୁଛି। ତଥାପି, ବିଶ୍ୱ ବଜାରରେ ମୁଦ୍ରାସ୍ଫୀତି ଏବଂ ଭୂ-ରାଜନୈତିକ ଅସ୍ଥିରତା ଭାରତର ବୈଦେଶିକ ବାଣିଜ୍ୟ ପାଇଁ ସର୍ବଦା ଏକ ବଡ଼ ପ୍ରତିବନ୍ଧକ ଭାବେ ଉଭା ହୋଇଛି। </span><br><br>ଅନୁଚ୍ଛେଦର ସ୍ୱର କିପରି ମନେହୁଏ?",
+ o:['ତଥ୍ୟପୂର୍ଣ୍ଣ ଏବଂ ବିଶ୍ଳେଷଣାତ୍ମକ','କାହାଣୀମୂଳକ ଏବଂ ରୋମାଞ୍ଚକର','ଅତ୍ୟଧିକ ନୈରାଶ୍ୟଜନକ','କାଳ୍ପନିକ ଏବଂ ଅବାସ୍ତବ'],
+ a:0,
+ exp:'Refers to Passage'},
+
+{q:"'ପ୍ରତ୍ୟକ୍ଷ' ଶବ୍ଦର ସଠିକ୍ ବିପରୀତ ଶବ୍ଦ ଚୟନ କରନ୍ତୁ।",
+ o:["ଅପ୍ରତ୍ୟକ୍ଷ","ପରୋକ୍ଷ","ବିପକ୍ଷ","ସମ୍ମୁଖ"],
+ a:1,
+ exp:"‘ପ୍ରତ୍ୟକ୍ଷ’ ଅର୍ଥ ସାମ୍ନାସାମ୍ନି ଦେଖାଯାଉଥିବା, ତାହାର ବିପରୀତ ‘ପରୋକ୍ଷ’।"},
+
+{q:"ହସ୍ତୀ-ର ତଦ୍ଭବ ଶବ୍ଦ କେଉଁଟି?",
+ o:["ହାତୀ","ଗଜ","କୁଞ୍ଜର","ମାତଙ୍ଗ"],
+ a:0,
+ exp:"‘ହସ୍ତୀ’ର ଚଳିତ ରୂପ ‘ହାତୀ’ ଯାହା ତଦ୍ଭବ ଶବ୍ଦ।"},
+
+{q:"The government has launched a new scheme for farmers.",
+ o:["ସରକାର ଚାଷୀଙ୍କ ପାଇଁ ଏକ ନୂତନ ଯୋଜନା କରିବେ।","ସରକାର ଚାଷୀଙ୍କ ପାଇଁ ଏକ ନୂତନ ଯୋଜନା ଆରମ୍ଭ କରିଛନ୍ତି","ଚାଷୀମାନେ ସରକାରଙ୍କ ପାଇଁ ଯୋଜନା କରୁଛନ୍ତି।","ନୂତନ ଯୋଜନାଟି ଚାଷୀଙ୍କ ଦ୍ଵାରା ଆରମ୍ଭ ହୋଇଛି।"],
+ a:1,
+ exp:"‘has launched’ର ଅର୍ଥ ‘ଆରମ୍ଭ କରିଛନ୍ତି’, ସେଥିପାଇଁ ଦ୍ୱିତୀୟ ବିକଳ୍ପ ସଠିକ୍।"},
+
+{q:"'ଆଖିରେ ଧୂଳି ଦେବା' - ଏହି ରୂଢ଼ିର ଅର୍ଥ କ’ଣ?",
+ o:["ଧୂଳି ଫିଙ୍ଗିବା","ଠକି ଦେବା","ଲୁଚି ରହିବା","କଷ୍ଟ ଦେବା"],
+ a:1,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ହେଉଛି କାହାକୁ ଠକିବା କିମ୍ବା ଧୋକା ଦେବା।"},
+
+{q:"ଏକ ପଦରେ ପ୍ରକାଶ କରନ୍ତୁ: 'ଯାହାର ଶତ୍ରୁ ଜନ୍ମିନାହିଁ' -",
+ o:["ନିଶତ୍ରୁ","ଅଜାତଶତ୍ରୁ","ଶତ୍ରୁହୀନ","ଅରିମର୍ଦ୍ଦନ"],
+ a:1,
+ exp:"‘ଅଜାତଶତ୍ରୁ’ ମାନେ ଯାହାର କେବେ ଶତ୍ରୁ ଜନ୍ମିନାହିଁ।"},
+
+{q:"ମେଘ ବରଷିଲା ପରି - ଏହି ବାକ୍ୟାଂଶରେ କ୍ରିୟା ବିଶେଷଣଟି କେଉଁଟି?",
+ o:["ମେଘ","ବରଷିଲା","ପରି","କେଉଁଟି ବି ନୁହେଁ"],
+ a:2,
+ exp:"‘ପରି’ କ୍ରିୟାର ଭାବ ବୁଝାଏ, ତେଣୁ ଏହା କ୍ରିୟା ବିଶେଷଣ।"},
+
+{q:"ଶୂନ୍ୟସ୍ଥାନ ପୂରଣ କରନ୍ତୁ:\nରାଜନୀତିରେ ସଫଳ ହେବାକୁ ହେଲେ ଧୈର୍ଯ୍ୟ ଓ ________ ରହିବା ଆବଶ୍ୟକ।",
+ o:["ଚପଳତା","କୁଟିଳତା","ସହନଶୀଳତା","ଅସ୍ଥିରତା"],
+ a:2,
+ exp:"ସଫଳତା ପାଇଁ ଧୈର୍ଯ୍ୟ ସହିତ ‘ସହନଶୀଳତା’ ଆବଶ୍ୟକ।"},
+
+{q:"Choose the correct English translation:\nଅର୍ଥନୈତିକ ଅଭିବୃଦ୍ଧି ପାଇଁ ଶିଳ୍ପାୟନ ଅପରିହାର୍ଯ୍ୟ।",
+ o:["Industrialization is essential for economic growth.","Economy grows because of industries.","Industries are important for financial status.","Industrialization helps the economic growth."],
+ a:0,
+ exp:"‘ଅପରିହାର୍ଯ୍ୟ’ ଅର୍ଥ ‘essential’, ସେଥିପାଇଁ ପ୍ରଥମ ବିକଳ୍ପ ସଠିକ୍।"},
+
+{q:"ନିମ୍ନଲିଖିତ ମଧ୍ୟରୁ କେଉଁ ଶବ୍ଦଟି ସଠିକ୍ ଭାବେ ଲେଖାଯାଇଛି?",
+ o:["ସାନ୍ମାସିକ","ଷାଣ୍ମାସିକ","ସାଣ୍ମାସିକ","ଷାଣମାସିକ"],
+ a:1,
+ exp:"ଠିକ୍ ବନାନ ‘ଷାଣ୍ମାସିକ’।"},
+
+{q:"Choose the correct English translation:\nସେ କଠିନ ପରିଶ୍ରମ କରିଥିଲେ ମଧ୍ୟ ସଫଳ ହୋଇପାରିଲେ ନାହିଁ।",
+ o:["He worked hard but not success.","Although he worked hard, he could not succeed.","He worked hard and failed.","Because he worked hard, he failed."],
+ a:1,
+ exp:"‘ମଧ୍ୟ’ ର ଅର୍ଥ ‘although’, ତେଣୁ ଦ୍ୱିତୀୟ ବିକଳ୍ପ ଠିକ୍।"},
+
+{q:"( ) ବନ୍ଧନୀ ମଧ୍ୟରେ ଥିବା ଶବ୍ଦ ବଦଳରେ ସଠିକ୍ ଶବ୍ଦ ବାଛନ୍ତୁ:\nସେ ସଭାରେ (ଅପମାନ) ହୋଇ ଫେରିଲେ।",
+ o:["ଅପମାନିତ","ଅପମାନଜନକ","ଅପମାନି","ପରିବର୍ତ୍ତନ ଆବଶ୍ୟକ ନାହିଁ"],
+ a:0,
+ exp:"ଠିକ୍ ବାକ୍ୟ ‘ଅପମାନିତ ହୋଇ’ ଯାହା ବ୍ୟାକରଣ ଅନୁସାରେ ଠିକ୍।"},
+
+{q:"'ଆବିର୍ଭାବ' ଶବ୍ଦର ସଠିକ୍ ବିପରୀତ ଶବ୍ଦଟି ଚୟନ କରନ୍ତୁ।",
+ o:["ତିରୋଭାବ","ଅନାବିର୍ଭାବ","ବିନାଶ","ପ୍ରତିଭାବ"],
+ a:0,
+ exp:"‘ଆବିର୍ଭାବ’ ଅର୍ଥ ପ୍ରକାଶ, ତାହାର ବିପରୀତ ‘ତିରୋଭାବ’।"},
+
+{q:"କୁମ୍ଭୀର କାନ୍ଦଣା ରୂଢ଼ିର ପ୍ରକୃତ ଅର୍ଥ କ’ଣ?",
+ o:["କଷ୍ଟରେ କାନ୍ଦିବା","ଲୁଚି ଲୁଚି କାନ୍ଦିବା","କପଟ ସହାନୁଭୂତି","ବହୁତ କାନ୍ଦିବା"],
+ a:2,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ହେଉଛି ଭଣ୍ଡ ସହାନୁଭୂତି ଦେଖାଇବା।"},
+
+{q:"ଭାରତ ଏକ\nP. କୃଷି ପ୍ରଧାନ ଦେଶ\nQ. ଜୀବିକା ନିର୍ବାହ କରନ୍ତି\nR. ଯେଉଁଠାରେ ଅଧିକାଂଶ ଲୋକ\nS. କୃଷି ଉପରେ ନିର୍ଭର କରି",
+ o:["PRSQ","PSRQ","RPQS","QPRS"],
+ a:1,
+ exp:"ସଠିକ୍ ବ୍ୟବସ୍ଥା ‘PSRQ’ ଯାହାରେ ବାକ୍ୟ ଠିକ୍ ହୁଏ।"},
+
+{q:"You should have informed me earlier.",
+ o:["ତୁମେ ମୋତେ ଆଗରୁ ସୂଚନା ଦେଇଛ।","ତୁମେ ମୋତେ ଆଗରୁ ଜଣାଇବା ଉଚିତ ଥିଲା","ତୁମେ ମୋତେ ଆଗରୁ ଜଣାଅ।","ତୁମେ ମୋତେ ଆଗରୁ କାହିଁକି ଜଣାଇଲ ନାହିଁ?"],
+ a:1,
+ exp:"‘should have informed’ ଅର୍ଥ ହେଉଛି ‘ଜଣାଇବା ଉଚିତ ଥିଲା’।"}
+
+
+
+
+
+    
+
+
+
+
+    
+];
+/* ===== End questions with explanations ===== */
+
+let answers={}, index=0, timeLeft, timerInt;
+
+window.onload = () => {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(saved){
+    if(saved.answers) answers = saved.answers; // restore previous answers
+    showScore(saved);
+  } else {
+    loader.classList.add("hidden");
+    instruction.classList.remove("hidden");
+  }
+};
+
+function startTest(){
+  instruction.classList.add("hidden");
+  test.classList.remove("hidden");
+  timeLeft=TEST_DURATION_MINUTES*60;
+  timerInt=setInterval(runTimer,1000);
+  buildGrid();loadQ();
+}
+
+function runTimer(){
+  if(timeLeft<=0){submitTest();return;}
+  timeLeft--;
+  timer.innerText=`${String(Math.floor(timeLeft/60)).padStart(2,"0")}:${String(timeLeft%60).padStart(2,"0")}`;
+}
+
+function loadQ(){
+  const q = questions[index];
+  question.innerHTML = (index + 1) + ". " + q.q;
+
+  /* ===== IMAGE LOGIC ===== */
+  imgWrap.classList.add("hidden");
+  qImg.style.display = "none";
+  imgLoader.style.display = "block";
+
+  if(q.img){
+    imgWrap.classList.remove("hidden");
+    qImg.src = q.img;
+
+    qImg.onload = () => {
+      imgLoader.style.display = "none";
+      qImg.style.display = "block";
+    };
+
+    qImg.onerror = () => {
+      imgWrap.classList.add("hidden");
+    };
+  }
+
+  options.innerHTML="";
+  q.o.forEach((t,i)=>{
+    const d=document.createElement("div");
+    d.className="option"+(answers[index]===i?" selected":"");
+    d.innerText=t;
+    d.onclick=()=>{
+      answers[index]=answers[index]===i?null:i;
+
+      /* ===== Save answers to localStorage ===== */
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      saved.answers = answers;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      /* ===== End save ===== */
+
+      loadQ();
+      updateGrid();
+    };
+    options.appendChild(d);
+  });
+
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === questions.length - 1;
+}
+
+function nextQ(){index++;loadQ();}
+function prevQ(){index--;loadQ();}
+
+function buildGrid(){
+  grid.innerHTML="";
+  questions.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.innerText=i+1;
+    d.onclick=()=>{index=i;loadQ();};
+    grid.appendChild(d);
+  });
+}
+
+function updateGrid(){
+  [...grid.children].forEach((d,i)=>d.classList.toggle("attempted",answers[i]!=null));
+}
+
+function submitTest(){
+  clearInterval(timerInt);
+  test.classList.add("hidden");
+  loader.classList.remove("hidden");
+  loader.querySelector("p").innerText="Saving score & calculating rank…";
+
+  let correct=0,wrong=0;
+  questions.forEach((q,i)=>{
+    if(answers[i]==null)return;
+    answers[i]===q.a?correct++:wrong++;
+  });
+
+  const score=+(correct-wrong*NEGATIVE_MARK).toFixed(2);
+
+  const baseData={
+    phone:user.phone,
+    name:user.name,
+    score,correct,wrong,
+    unattempted:questions.length-correct-wrong,
+    updatedAt:Date.now()
+  };
+
+  db.collection("tests").doc(TEST_ID).collection("results").doc(user.phone)
+  .set(baseData,{merge:true})
+  .then(()=>calculateRank(baseData));
+}
+
+function calculateRank(myData){
+  db.collection("tests").doc(TEST_ID).collection("results").get()
+  .then(snap=>{
+    const arr=snap.docs.map(d=>({...d.data(),id:d.id}));
+    arr.sort((a,b)=>b.score-a.score);
+    const rank=arr.findIndex(x=>x.id===user.phone)+1;
+    myData.rankText=`${rank} / ${arr.length}`;
+    myData.answers=answers;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(myData));
+    showScore(myData);
+  });
+}
+
+function showScore(r){
+  loader.classList.add("hidden");
+  score.classList.remove("hidden");
+  userScore.innerText=`Hi ${r.name}, your score is ${r.score}`;
+  stats.innerHTML=`Correct: ${r.correct}<br>Wrong: ${r.wrong}<br>Unattempted: ${r.unattempted}<br><b>Rank: ${r.rankText}</b>`;
+  filterQ("all",document.querySelector(".filter button"));
+}
+
+function filterQ(type,btn){
+  document.querySelectorAll(".filter button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  review.innerHTML="";
+  questions.forEach((q,i)=>{
+    const a=answers[i];
+    if(type==="correct"&&a!==q.a)return;
+    if(type==="wrong"&&(a==null||a===q.a))return;
+    if(type==="unattempted"&&a!=null)return;
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <b>${q.q}</b><br>
+      Your: ${a!=null?q.o[a]:"—"}<br>
+      Correct: ${q.o[q.a]}<br>
+      <details>
+        <summary>Show Explanation</summary>
+        <p>${q.exp || "No explanation provided."}</p>
+      </details>
+    `;
+    review.appendChild(c);
+  });
+}
+
+function reattempt(){popup.style.display="flex";}
+function confirmReattempt(){localStorage.removeItem(STORAGE_KEY);location.reload();}
+</script>
+</body>
+</html>
