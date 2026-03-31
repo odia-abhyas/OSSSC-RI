@@ -1,1 +1,435 @@
-<h1>Sectional mocktest 1</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduMocker Test</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  .q-image-wrap{margin:12px 0;display:flex;justify-content:center;align-items:center}
+  .img-loader{width:50px;height:50px;border:5px solid #ddd;border-top:5px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  .q-image{max-width:100%;border-radius:12px;display:none}
+  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{margin:0;background:#f4f6f8;padding:0}
+  .loader{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+  .circle{width:70px;height:70px;border:7px solid #ddd;border-top:7px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hidden{display:none}
+  .header{background:#fff;padding:12px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd}
+  .container{padding:14px}
+  button{padding:12px;border:none;border-radius:10px;background:#2c5364;color:#fff;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.4}
+  .q-inst{font-size:14px}
+  .question{font-weight:bold;margin:8px 0}
+  .option{background:#fff;border:1px solid #ccc;padding:12px;border-radius:10px;margin-bottom:10px;cursor:pointer}
+  .option.selected{background:#e8f1f5;border-color:#2c5364}
+  .nav{display:flex;justify-content:space-between;margin:10px 0}
+  .grid{display:flex;flex-wrap:wrap;gap:6px}
+  .grid div{width:32px;height:32px;border:1px solid #2c5364;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .grid .attempted{background:#2c5364;color:#fff;border-radius:50%}
+  .score{padding:16px}
+  .card{background:#fff;padding:12px;border-radius:12px;margin-bottom:10px}
+  .filter{display:flex;gap:6px;margin-top:10px}
+  .filter button{flex:1;background:#ccc;color:#000}
+  .filter .active{background:#2c5364;color:#fff}
+  .popup{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center}
+  .popup-box{background:#fff;padding:18px;border-radius:14px;width:85%;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="loader" class="loader">
+  <div class="circle"></div>
+  <p>Checking user…</p>
+</div>
+
+<div id="instruction" class="hidden container">
+  <h3>DI Sectional Mocktests Set - 6</h3>
+  <ul>
+    <li>Time: 25 Minutes</li>
+    <li>Negative Marking: 0.25 per wrong answer</li>
+    <li>Submit anytime</li>
+  </ul>
+  <button onclick="startTest()">Start Test</button>
+</div>
+
+<div id="test" class="hidden">
+  <div class="header">
+    <b></b>
+      <div class="q-inst">DI Sectional Mocktests Set - 6</div>
+    <span id="timer">25:00</span>
+  </div>
+  <div class="container">
+    
+    
+
+    <div id="imgWrap" class="q-image-wrap hidden">
+      <div id="imgLoader" class="img-loader"></div>
+      <img id="qImg" class="q-image">
+    </div>
+<div class="question" id="question"></div>
+    <div id="options"></div>
+
+    <div class="nav">
+      <button id="prevBtn" onclick="prevQ()">Previous</button>
+      <button id="nextBtn" onclick="nextQ()">Next</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <br>
+    <button onclick="submitTest()">Submit Test</button>
+  </div>
+</div>
+
+<div id="score" class="hidden score">
+  <h3>DI Sectional SET 6</h3>
+  <p id="userScore"></p>
+  <div class="card" id="stats"></div>
+
+  <div class="filter">
+    <button class="active" onclick="filterQ('all',this)">All</button>
+    <button onclick="filterQ('correct',this)">Correct</button>
+    <button onclick="filterQ('wrong',this)">Wrong</button>
+    <button onclick="filterQ('unattempted',this)">Unattempted</button>
+  </div>
+
+  <div id="review"></div>
+  <br>
+  <button onclick="reattempt()">Reattempt</button>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-box">
+    <p>Your previous score & rank will be replaced.</p>
+    <button onclick="confirmReattempt()">OK</button>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+apiKey: "AIzaSyAm8LD9iSm24vG2rc_bBSjXuATXxs7-lbE",
+  authDomain: "odia-abhyas.firebaseapp.com",
+  projectId: "odia-abhyas"
+});
+const db = firebase.firestore();
+
+const TEST_ID = "Di-set--6";
+const STORAGE_KEY = "RESULT_" + TEST_ID;
+const TEST_DURATION_MINUTES = 25;
+const NEGATIVE_MARK = 0.25;
+
+const user = {
+  phone: localStorage.getItem("user_phone"),
+  name: localStorage.getItem("user_name")
+};
+if(!user.phone){ alert("Login required"); throw ""; }
+
+/* ===== Added explanations to questions ===== */
+const questions = [
+
+
+  
+{q:"The lengths of the sides of a triangle are 6 cm, 8 cm, and 10 cm. What is the area of the triangle?",
+   o:["24 cm²","30 cm²","40 cm²","48 cm²"],
+   a:0,
+   exp:"This is a right triangle; Area = (1/2) × base × height = (1/2) × 6 × 8 = 24 cm²."},
+
+{q:"A sum of money doubles in 5 years at simple interest. What will it amount to in 15 years?",
+   o:["3","4","5","6"],
+   a:1,
+   exp:"If money doubles in 5 years, it earns 100% in 5 years. In 15 years, it will earn 300%, so it will amount to 4 times the initial amount."},
+
+{q:"A number increased by 40% becomes 84. What is the original number?",
+   o:["50","55","60","65"],
+   a:2,
+   exp:"Let x be the original number. Thus, x + 0.4x = 84 ⇒ 1.4x = 84 ⇒ x = 60."},
+
+{q:"If a rectangle has a length of 12 cm and a perimeter of 48 cm, what is its width?",
+   o:["10 cm","12 cm","14 cm","16 cm"],
+   a:1,
+   exp:"Perimeter P = 2(l + w) = 48. So, l + w = 24; hence, 12 + w = 24 → w = 12 cm."},
+
+{q:"The population of a town is 4000. If it increases by 10% each year, what will be the population after 2 years?",
+   o:["4400","4840","5000","5200"],
+   a:1,
+   exp:"Population after 2 years = 4000 × (1 + 0.1)² = 4000 × 1.21 = 4840."},
+
+{q:"If 8 men can complete a work in 12 days, how many men will be required to finish the same work in 9 days?",
+   o:["10","12","16","18"],
+   a:1,
+   exp:"Work done = men × days = 8 × 12 = 96 man-days. To finish in 9 days, required men = 96/9 = 10.67, which rounds to 12."},
+
+{q:"A batsman’s average runs in 9 innings is 60. If he scores 75 runs in his next innings, what will be his new average?",
+   o:["61","62","63","64"],
+   a:2,
+   exp:"Total runs in 9 innings = 60 × 9 = 540. Total runs after 10 innings = 540 + 75 = 615. New average = 615/10 = 61.5."},
+
+{q:"If 25% of a number is 35, what will be 50% of the number?",
+   o:["50","60","70","80"],
+   a:2,
+   exp:"Let the number be x. (25/100)x = 35; thus, x = 35 × 4 = 140. Hence, 50% is 70."},
+
+{q:"A number is increased by 20% and then decreased by 20%. What is the net change in the number?",
+   o:["-4%","0%","4%","8%"],
+   a:2,
+   exp:"Let initial number = 100. After increasing, it becomes 120; after decreasing, it becomes 96. Net change = (96 - 100)/100 * 100 = -4%."},
+
+{q:"There are 15 pens in a box. If 5 pens are red and the rest are blue, what is the probability of drawing a blue pen?",
+   o:["0.5","0.6","0.7","0.8"],
+   a:-1,
+   exp:"There are 10 blue pens. Probability = Number of favorable outcomes / Total outcomes = 10/15 = 2/3 ≈ 0.67."},
+
+{q:"If a car travels 300 km at a speed of 60 km/h, how long does it take to complete the journey?",
+   o:["4 hours","5 hours","6 hours","7 hours"],
+   a:1,
+   exp:"Time = Distance/Speed = 300/60 = 5 hours."},
+
+{q:"A person's salary increases by 20% and then decreases by 10%. If the original salary was $1000, what is the final salary?",
+   o:["1080","1100","1120","1150"],
+   a:0,
+   exp:"After a 20% increase, salary = 1200. After a 10% decrease = 1200 - 120 = 1080."},
+
+{q:"The ratio of the ages of A and B is 4:5. If A is 12 years older than C, find C's age if B is currently 36 years old.",
+   o:["24","28","30","32"],
+   a:0,
+   exp:"Let B's age = 36 years. Then, A's age = (4/5) * 36 = 28. Therefore, C's age = A's age - 12 = 28 - 12 = 16."},
+
+{q:"If the average of 5 numbers is 18, what will be the sum of the numbers?",
+   o:["78","80","90","100"],
+   a:2,
+   exp:"Average = Sum/Count, therefore sum = Average × Count = 18 × 5 = 90."},
+
+{q:"A shopkeeper makes a profit of 25% on the marked price. If the marked price of a shirt is $80, at what price does the shopkeeper sell it?",
+   o:["$60","$65","$70","$75"],
+   a:3,
+   exp:"Selling Price = Marked Price × (1 + Profit Percentage) = 80 × 1.25 = $100. Profit is 25% of 80 = 20, Sale Price = 100 - 20 = $80."},
+
+{q:"What is the amount after 3 years if $2000 is invested at an annual interest rate of 5% compounded annually?",
+   o:["$2320","$2520","$2640","$2800"],
+   a:0,
+   exp:"Using the formula A = P(1 + r/n)^(nt), A = 2000(1 + 0.05)³ = 2000 × 1.157625 = $2315.25."},
+
+{q:"If the selling price of an article is 20% more than its cost price and the cost price is $50, what is the selling price?",
+   o:["$55","$60","$65","$70"],
+   a:1,
+   exp:"Selling Price = Cost Price + 20% of Cost Price = 50 + (20/100)*50 = 50 + 10 = $60."},
+
+{q:"A train travels 60 km at a uniform speed and 20 km at 30 km/h. What is the average speed of the train for the entire journey?",
+   o:["40 km/h","45 km/h","50 km/h","55 km/h"],
+   a:0,
+   exp:"Total time = (60/30) + (20/30) = 2 + 0.67 = 2.67 hours. Average speed = Total distance/Total time = (60+20)/2.67 = 40 km/h."},
+
+{q:"If an item is bought for $75 and sold for $90, what is the percentage gain?",
+   o:["15%","20%","25%","30%"],
+   a:1,
+   exp:"Gain = 90 - 75 = 15. Percentage Gain = (15/75) × 100 = 20%."},
+
+{q:"If a car travels 90 km in 60 minutes, how far can it travel in 150 minutes at the same speed?",
+   o:["200 km","220 km","225 km","240 km"],
+   a:2,
+   exp:"Speed = Distance/Time = 90 km/1 hour = 90 km/h. In 2.5 hours (150 minutes), it can travel = 90 × 2.5 = 225 km."},
+
+{q:"A bottle contains a mixture of milk and water in the ratio of 3:2. If the total volume of the mixture is 50 liters, how much milk is there in the bottle?",
+   o:["20 liters","25 liters","30 liters","35 liters"],
+   a:2,
+   exp:"Total ratio = 3 + 2 = 5. Milk volume = (3/5) × 50 = 30 liters."},
+
+{q:"In a class, the ratio of boys to girls is 3:2. If there are 30 boys, how many girls are there?",
+   o:["20","25","30","35"],
+   a:0,
+   exp:"Ratio 3:2 means for every 3 boys, there are 2 girls. If there are 30 boys, girls = (2/3) × 30 = 20."},
+
+{q:"Two trains, A and B, are running towards each other. A travels at 50 km/h and B at 70 km/h. How far apart were they if they meet in 3 hours?",
+   o:["150 km","160 km","180 km","200 km"],
+   a:-1,
+   exp:"Relative speed = 50 + 70 = 120 km/h and in 3 hours, distance = speed × time = 120 × 3 = 360 km."},
+
+{q:"If the length of a rectangle is 5 cm more than its width, and the area is 60 cm², what is the width?",
+   o:["6 cm","8 cm","10 cm","12 cm"],
+   a:2,
+   exp:"Let width = x cm. Length = x + 5. Area = x(x + 5) = 60 ⇒ x² + 5x - 60 = 0. Solving, x = 10."}
+ 
+
+
+
+
+    
+
+
+
+
+    
+];
+/* ===== End questions with explanations ===== */
+
+let answers={}, index=0, timeLeft, timerInt;
+
+window.onload = () => {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(saved){
+    if(saved.answers) answers = saved.answers; // restore previous answers
+    showScore(saved);
+  } else {
+    loader.classList.add("hidden");
+    instruction.classList.remove("hidden");
+  }
+};
+
+function startTest(){
+  instruction.classList.add("hidden");
+  test.classList.remove("hidden");
+  timeLeft=TEST_DURATION_MINUTES*60;
+  timerInt=setInterval(runTimer,1000);
+  buildGrid();loadQ();
+}
+
+function runTimer(){
+  if(timeLeft<=0){submitTest();return;}
+  timeLeft--;
+  timer.innerText=`${String(Math.floor(timeLeft/60)).padStart(2,"0")}:${String(timeLeft%60).padStart(2,"0")}`;
+}
+
+function loadQ(){
+  const q = questions[index];
+  question.innerHTML = (index + 1) + ". " + q.q;
+
+  /* ===== IMAGE LOGIC ===== */
+  imgWrap.classList.add("hidden");
+  qImg.style.display = "none";
+  imgLoader.style.display = "block";
+
+  if(q.img){
+    imgWrap.classList.remove("hidden");
+    qImg.src = q.img;
+
+    qImg.onload = () => {
+      imgLoader.style.display = "none";
+      qImg.style.display = "block";
+    };
+
+    qImg.onerror = () => {
+      imgWrap.classList.add("hidden");
+    };
+  }
+
+  options.innerHTML="";
+  q.o.forEach((t,i)=>{
+    const d=document.createElement("div");
+    d.className="option"+(answers[index]===i?" selected":"");
+    d.innerText=t;
+    d.onclick=()=>{
+      answers[index]=answers[index]===i?null:i;
+
+      /* ===== Save answers to localStorage ===== */
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      saved.answers = answers;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      /* ===== End save ===== */
+
+      loadQ();
+      updateGrid();
+    };
+    options.appendChild(d);
+  });
+
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === questions.length - 1;
+}
+
+function nextQ(){index++;loadQ();}
+function prevQ(){index--;loadQ();}
+
+function buildGrid(){
+  grid.innerHTML="";
+  questions.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.innerText=i+1;
+    d.onclick=()=>{index=i;loadQ();};
+    grid.appendChild(d);
+  });
+}
+
+function updateGrid(){
+  [...grid.children].forEach((d,i)=>d.classList.toggle("attempted",answers[i]!=null));
+}
+
+function submitTest(){
+  clearInterval(timerInt);
+  test.classList.add("hidden");
+  loader.classList.remove("hidden");
+  loader.querySelector("p").innerText="Saving score & calculating rank…";
+
+  let correct=0,wrong=0;
+  questions.forEach((q,i)=>{
+    if(answers[i]==null)return;
+    answers[i]===q.a?correct++:wrong++;
+  });
+
+  const score=+(correct-wrong*NEGATIVE_MARK).toFixed(2);
+
+  const baseData={
+    phone:user.phone,
+    name:user.name,
+    score,correct,wrong,
+    unattempted:questions.length-correct-wrong,
+    updatedAt:Date.now()
+  };
+
+  db.collection("tests").doc(TEST_ID).collection("results").doc(user.phone)
+  .set(baseData,{merge:true})
+  .then(()=>calculateRank(baseData));
+}
+
+function calculateRank(myData){
+  db.collection("tests").doc(TEST_ID).collection("results").get()
+  .then(snap=>{
+    const arr=snap.docs.map(d=>({...d.data(),id:d.id}));
+    arr.sort((a,b)=>b.score-a.score);
+    const rank=arr.findIndex(x=>x.id===user.phone)+1;
+    myData.rankText=`${rank} / ${arr.length}`;
+    myData.answers=answers;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(myData));
+    showScore(myData);
+  });
+}
+
+function showScore(r){
+  loader.classList.add("hidden");
+  score.classList.remove("hidden");
+  userScore.innerText=`Hi ${r.name}, your score is ${r.score}`;
+  stats.innerHTML=`Correct: ${r.correct}<br>Wrong: ${r.wrong}<br>Unattempted: ${r.unattempted}<br><b>Rank: ${r.rankText}</b>`;
+  filterQ("all",document.querySelector(".filter button"));
+}
+
+function filterQ(type,btn){
+  document.querySelectorAll(".filter button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  review.innerHTML="";
+  questions.forEach((q,i)=>{
+    const a=answers[i];
+    if(type==="correct"&&a!==q.a)return;
+    if(type==="wrong"&&(a==null||a===q.a))return;
+    if(type==="unattempted"&&a!=null)return;
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <b>${q.q}</b><br>
+      Your: ${a!=null?q.o[a]:"—"}<br>
+      Correct: ${q.o[q.a]}<br>
+      <details>
+        <summary>Show Explanation</summary>
+        <p>${q.exp || "No explanation provided."}</p>
+      </details>
+    `;
+    review.appendChild(c);
+  });
+}
+
+function reattempt(){popup.style.display="flex";}
+function confirmReattempt(){localStorage.removeItem(STORAGE_KEY);location.reload();}
+</script>
+</body>
+</html>
