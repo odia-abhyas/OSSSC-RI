@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odia Abhyas</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  .q-image-wrap{margin:12px 0;display:flex;justify-content:center;align-items:center}
+  .img-loader{width:50px;height:50px;border:5px solid #ddd;border-top:5px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  .q-image{max-width:100%;border-radius:12px;display:none}
+  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{margin:0;background:#f4f6f8;padding:0}
+  .loader{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+  .circle{width:70px;height:70px;border:7px solid #ddd;border-top:7px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hidden{display:none}
+  .header{background:#fff;padding:12px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd}
+  .container{padding:14px}
+  button{padding:12px;border:none;border-radius:10px;background:#2c5364;color:#fff;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.4}
+  .q-inst{font-size:14px}
+  .question{font-weight:bold;margin:8px 0}
+  .option{background:#fff;border:1px solid #ccc;padding:12px;border-radius:10px;margin-bottom:10px;cursor:pointer}
+  .option.selected{background:#e8f1f5;border-color:#2c5364}
+  .nav{display:flex;justify-content:space-between;margin:10px 0}
+  .grid{display:flex;flex-wrap:wrap;gap:6px}
+  .grid div{width:32px;height:32px;border:1px solid #2c5364;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .grid .attempted{background:#2c5364;color:#fff;border-radius:50%}
+  .score{padding:16px}
+  .card{background:#fff;padding:12px;border-radius:12px;margin-bottom:10px}
+  .filter{display:flex;gap:6px;margin-top:10px}
+  .filter button{flex:1;background:#ccc;color:#000}
+  .filter .active{background:#2c5364;color:#fff}
+  .popup{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center}
+  .popup-box{background:#fff;padding:18px;border-radius:14px;width:85%;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="loader" class="loader">
+  <div class="circle"></div>
+  <p>Checking user…</p>
+</div>
+
+<div id="instruction" class="hidden container">
+  <h3>OSSSC RI Odia Sectional - 3</h3>
+  <ul>
+    <li>Time: 20 Minutes</li>
+      <li>Total Questions: 20 </li>
+    <li>Negative Marking: 0.25 per wrong answer</li>
+    <li>Submit anytime</li>
+  </ul>
+  <button onclick="startTest()">Start Test</button>
+</div>
+
+<div id="test" class="hidden">
+  <div class="header">
+    <b></b>
+      <div class="q-inst">OSSSC RI Odia Sectional - 3</div>
+    <span id="timer">20:00</span>
+  </div>
+  <div class="container">
+    
+    
+
+    <div id="imgWrap" class="q-image-wrap hidden">
+      <div id="imgLoader" class="img-loader"></div>
+      <img id="qImg" class="q-image">
+    </div>
+<div class="question" id="question"></div>
+    <div id="options"></div>
+
+    <div class="nav">
+      <button id="prevBtn" onclick="prevQ()">Previous</button>
+      <button id="nextBtn" onclick="nextQ()">Next</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <br>
+    <button onclick="submitTest()">Submit Test</button>
+  </div>
+</div>
+
+<div id="score" class="hidden score">
+  <h3>OSSSC RI Odia Sectional - 3</h3>
+  <p id="userScore"></p>
+  <div class="card" id="stats"></div>
+
+  <div class="filter">
+    <button class="active" onclick="filterQ('all',this)">All</button>
+    <button onclick="filterQ('correct',this)">Correct</button>
+    <button onclick="filterQ('wrong',this)">Wrong</button>
+    <button onclick="filterQ('unattempted',this)">Unattempted</button>
+  </div>
+
+  <div id="review"></div>
+  <br>
+  <button onclick="reattempt()">Reattempt</button>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-box">
+    <p>Your previous score & rank will be replaced.</p>
+    <button onclick="confirmReattempt()">OK</button>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+apiKey: "AIzaSyAm8LD9iSm24vG2rc_bBSjXuATXxs7-lbE",
+  authDomain: "odia-abhyas.firebaseapp.com",
+  projectId: "odia-abhyas"
+});
+const db = firebase.firestore();
+
+const TEST_ID = "OSSSC RI Odia Sectional - 3";
+const STORAGE_KEY = "RESULT_" + TEST_ID;
+const TEST_DURATION_MINUTES = 20;
+const NEGATIVE_MARK = 0.25;
+
+const user = {
+  phone: localStorage.getItem("user_phone"),
+  name: localStorage.getItem("user_name")
+};
+if(!user.phone){ alert("Login required"); throw ""; }
+
+/* ===== Added explanations to questions ===== */
+const questions = [
+
+{q:"'ପ୍ରସାରଣ' ଶବ୍ଦର ସଠିକ୍ ବିପରୀତ ଶବ୍ଦଟି ବାଛନ୍ତୁ।",
+ o:["ବିସ୍ତାରଣ","ସଙ୍କୋଚନ","ଅପସାରଣ","ବିକିରଣ"],
+ a:1,
+ exp:"‘ପ୍ରସାରଣ’ ଅର୍ଥ ବିସ୍ତାର, ତାହାର ବିପରୀତ ‘ସଙ୍କୋଚନ’ ଅର୍ଥ ହେଉଛି ସଂକୁଚିତ ହେବା।"},
+
+{q:"The implementation of the policy has been delayed due to technical issues.",
+ o:["ନୀତିଟି ବୈଷୟିକ ସମସ୍ୟା ଯୋଗୁଁ ବନ୍ଦ ହୋଇଗଲା।","ବୈଷୟିକ ତ୍ରୁଟି କାରଣରୁ ନୀତିର କାର୍ଯ୍ୟକାରିତା ବିଳମ୍ବିତ ହୋଇଛି","ବୈଷୟିକ ସମସ୍ୟା ପାଇଁ ନୀତି ବଦଳି ଯାଇଛି।","ନୀତି କାର୍ଯ୍ୟକାରୀ କରିବାରେ ବୈଷୟିକ ସମସ୍ୟା ନାହିଁ।"],
+ a:1,
+ exp:"‘has been delayed’ ଅର୍ଥ ବିଳମ୍ବିତ ହୋଇଛି, ସେଥିପାଇଁ ଦ୍ୱିତୀୟ ବିକଳ୍ପ ସଠିକ୍।"},
+
+{q:"“କୁଳ ମଜ୍ଜାଇବା” - ଏହି ରୂଢ଼ିଟି କେଉଁ ଅର୍ଥରେ ବ୍ୟବହୃତ ହୁଏ?",
+ o:["ବଂଶର ନାମ ରଖିବା","ବଂଶକୁ ଅପମାନିତ କରିବା","ପହଁରିବା ଶିଖିବା","କୂଳରେ ବସିବା"],
+ a:1,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ବଂଶକୁ ଲଜ୍ଜା ଦେବା କିମ୍ବା ଅପମାନ କରିବା।"},
+
+{q:"ବନାନ ଶୁଦ୍ଧି ଦୃଷ୍ଟିରୁ ନିମ୍ନଲିଖିତ ମଧ୍ୟରୁ କେଉଁଟି ସଠିକ୍?",
+ o:["ମନୋଜ୍ଞ","ମନୋଜ୍ଞ୍ୟ","ମନଜ୍ଞ","ମନୋଯ୍ଞ"],
+ a:3,
+ exp:"ଠିକ୍ ବନାନ ‘ମନୋଯ୍ଞ’।"},
+
+{q:"Choose the correct English translation:\nଆପଣଙ୍କ ସହାୟତା ବିନା ମୁଁ ଏହି କାର୍ଯ୍ୟ ସମ୍ପୂର୍ଣ୍ଣ କରିପାରି ନଥାନ୍ତି।",
+ o:["I could not complete this work without your help","I cannot do this work with your help.","Your help is not needed for this work.","Without your help I am not completing this work."],
+ a:0,
+ exp:"‘ପାରି ନଥାନ୍ତି’ ର past form ଅନୁସାରେ ‘could not complete’ ଠିକ୍।"},
+
+{q:"ନିମ୍ନଲିଖିତ ବାକ୍ୟରେ କେଉଁ ପଦଟି 'କ୍ରିୟା ବିଶେଷଣ' ଭାବେ ବ୍ୟବହୃତ ହୋଇଛି?\nବାକ୍ୟ: ସେ ଅତି ସନ୍ତର୍ପଣରେ ପାହାଚ ଗୁଡ଼ିକ ଅତିକ୍ରମ କରି ଉପରକୁ ଗଲେ।",
+ o:["ପାହାଚ","ସନ୍ତର୍ପଣରେ","ଅତିକ୍ରମ","ଗଲେ"],
+ a:1,
+ exp:"‘ସନ୍ତର୍ପଣରେ’ କ୍ରିୟା କେମିତି ଘଟିଛି ତାହା ବୁଝାଏ, ସେଥିପାଇଁ ଏହା କ୍ରିୟା ବିଶେଷଣ।"},
+
+{q:"ଏକ ପଦରେ ପ୍ରକାଶ କରନ୍ତୁ: 'ଯାହା କଷ୍ଟରେ ଜୟ କରାଯାଏ' -",
+ o:["ଦୁର୍ଜୟ","ଅଜେୟ","ପରାଜୟ","ଜୟଶୀଳ"],
+ a:0,
+ exp:"‘ଦୁର୍ଜୟ’ ମାନେ ଯାହାକୁ ଜିତିବା କଷ୍ଟକର।"},
+
+{q:"ଉପଯୁକ୍ତ ଶବ୍ଦ ଦ୍ଵାରା ଶୂନ୍ୟସ୍ଥାନ ପୂରଣ କରନ୍ତୁ:\nଜଣେ ଦକ୍ଷ ପ୍ରଶାସକଙ୍କ ପାଇଁ ନିରପେକ୍ଷତା ଏବଂ ________ ଏକାନ୍ତ ଅପରିହାର୍ଯ୍ୟ।",
+ o:["ସ୍ଵେଚ୍ଛାଚାରିତା","କର୍ତ୍ତବ୍ୟନିଷ୍ଠା","ପାତରଅନ୍ତର","କୌଶଳ"],
+ a:1,
+ exp:"ଏକ ଭଲ ପ୍ରଶାସକ ପାଇଁ ‘କର୍ତ୍ତବ୍ୟନିଷ୍ଠା’ ଅତ୍ୟାବଶ୍ୟକ।"},
+
+{q:"Choose the correct English translation:\nବିଜ୍ଞାନ ଓ ପ୍ରଯୁକ୍ତିବିଦ୍ୟା ମାନବ ସଭ୍ୟତାକୁ ଏକ ନୂତନ ମୋଡ଼ ଦେଇଛି।",
+ o:["Science and technology have given a new turn to human civilization","Human civilization changed by science and technology.","Science and technology are the parts of human civilization.","Science and technology gives a new way to humanity."],
+ a:0,
+ exp:"‘ଦେଇଛି’ ଅର୍ଥ present perfect, ସେଥିପାଇଁ ‘have given’ ଠିକ୍।"},
+
+{q:"( ) ଚିହ୍ନିତ ଅଂଶ ପାଇଁ ଏକ ଉପଯୁକ୍ତ ପ୍ରତିଶବ୍ଦ ବାଛନ୍ତୁ:\nଆଜି (ଆକାଶ) ନିର୍ମଳ ଦେଖାଯାଉଛି।",
+ o:["ଅମ୍ବର","ଅନଳ","ଅମ୍ବୁ","ଅବନୀ"],
+ a:0,
+ exp:"‘ଆକାଶ’ର ପର୍ଯ୍ୟାୟବାଚୀ ଶବ୍ଦ ‘ଅମ୍ବର’।"},
+
+{q:"ଉପର ଠାଉରିଆ - ଏହି ରୂଢ଼ିର ପ୍ରକୃତ ଅର୍ଥ କ’ଣ?",
+ o:["ଉପରେ ରହିବା","ଗଭୀରତା ନଥିବା ବା ଅସାର","ସବୁ ଜାଣିଥିବା ବ୍ୟକ୍ତି","ବହୁତ ଉଚ୍ଚରେ ଥିବା"],
+ a:1,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ହେଉଛି ଯାହାର ଗଭୀରତା ନାହିଁ କିମ୍ବା ଅସାର।"},
+
+{q:"'ଅନୁଲୋମ' ଶବ୍ଦର ସଠିକ୍ ବିପରୀତ ଶବ୍ଦ କେଉଁଟି?",
+ o:["ବିଲୋମ","ପ୍ରତିଲୋମ","ସୁଲୋମ","ଅପଲୋମ"],
+ a:1,
+ exp:"‘ଅନୁଲୋମ’ର ବିପରୀତ ‘ପ୍ରତିଲୋମ’।"},
+
+{q:"ନିମ୍ନଲିଖିତ ଶବ୍ଦ ମଧ୍ୟରୁ କେଉଁଟି ଏକ 'ତତ୍ସମ' ଶବ୍ଦ?",
+ o:["ହାତ","ଘୋଡ଼ା","ପୁଷ୍ପ","ଦୁଆର"],
+ a:2,
+ exp:"‘ପୁଷ୍ପ’ ସଂସ୍କୃତ ରୂପ ଥିବାରୁ ଏହା ତତ୍ସମ ଶବ୍ଦ।"},
+
+{q:"ବାକ୍ୟର ଅଂଶ ଗୁଡ଼ିକୁ ସଠିକ କ୍ରମରେ ସଜାନ୍ତୁ।\nP. ଉନ୍ନତି ସମ୍ଭବ ନୁହେଁ\nQ. ମହିଳାମାନଙ୍କ ସଶକ୍ତିକରଣ\nR. ଏକ ସୁସ୍ଥ ସମାଜ ଗଠନ\nS. ବିନା କଦାପି",
+ o:["RQSP","QSPR","PRSQ","SPRQ"],
+ a:0,
+ exp:"ସଠିକ୍ ବ୍ୟବସ୍ଥା ‘RQSP’ ଯାହାରେ ବାକ୍ୟ ଅର୍ଥପୂର୍ଣ୍ଣ ହୁଏ।"},
+
+{q:"Hardly had I reached the station when the train started.",
+ o:["ମୁଁ ଷ୍ଟେସନରେ ପହଞ୍ଚିବା ପରେ ଟ୍ରେନ ଛାଡିଲା।","ମୁଁ ଷ୍ଟେସନରେ ପହଞ୍ଚିବା ମାତ୍ରେ ଟ୍ରେନ ଛାଡିଲା","ମୁଁ ଷ୍ଟେସନରେ ପହଞ୍ଚିବା ପୂର୍ବରୁ ଟ୍ରେନ ଛାଡିଥିଲା।","ମୁଁ ଷ୍ଟେସନରେ ପହଞ୍ଚିଲି କିନ୍ତୁ ଟ୍ରେନ ଛାଡିଲା ନାହିଁ।"],
+ a:1,
+ exp:"‘Hardly…when’ ର ଅର୍ଥ ‘ମାତ୍ରେ’, ସେଥିପାଇଁ ଦ୍ୱିତୀୟ ବିକଳ୍ପ ସଠିକ୍।"},
+
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଓଡ଼ିଶାର ଭୌଗୋଳିକ ଅବସ୍ଥିତି ଏହାକୁ ପ୍ରାକୃତିକ ବିପର୍ଯ୍ୟୟ, ବିଶେଷ କରି ସାମୁଦ୍ରିକ ବାତ୍ୟା ପ୍ରତି ଅଧିକ ସମ୍ବେଦନଶୀଳ କରିଛି। ବଙ୍ଗୋପସାଗରରେ ସୃଷ୍ଟି ହେଉଥିବା ଲଘୁଚାପ କ୍ରମଶଃ ଘନୀଭୂତ ହୋଇ ଭୟଙ୍କର ବାତ୍ୟାର ରୂପ ନେଇଥାଏ, ଯାହା ଓଡ଼ିଶାର ଉପକୂଳବର୍ତ୍ତୀ ଜିଲ୍ଲାଗୁଡ଼ିକରେ ବ୍ୟାପକ ଧନଜୀବନ ହାନି କରିଥାଏ। ୧୯୯୯ ମସିହାର ମହାବାତ୍ୟାଠାରୁ ଆରମ୍ଭ କରି ନିକଟ ଅତୀତର ଫାଇଲିନ୍, ହୁଡ୍‌ହୁଡ୍, ଫୋନି, ଏବଂ ଅମ୍ଫାନ ଭଳି ବାତ୍ୟାଗୁଡ଼ିକ ରାଜ୍ୟର ଭିତ୍ତିଭୂମିକୁ ବାରମ୍ବାର ଦୋହଲାଇ ଦେଇଛନ୍ତି। ବାତ୍ୟା ସମୟରେ ପ୍ରବଳ ବେଗରେ ବହୁଥିବା ପବନ ସହିତ ସାମୁଦ୍ରିକ ଜୁଆର ଏବଂ ଅତି ପ୍ରବଳ ବର୍ଷା ଯୋଗୁଁ ଚାଷଜମି ନଷ୍ଟ ହେବା ସହ ଯୋଗାଯୋଗ ବିଚ୍ଛିନ୍ନ ହୋଇଯାଏ।<br><br>ତେବେ, ବିପର୍ଯ୍ୟୟ ପରିଚାଳନା କ୍ଷେତ୍ରରେ ଓଡ଼ିଶା ଏବେ ବିଶ୍ୱ ଦରବାରରେ ଏକ ମଡେଲ୍ ଭାବେ ଉଭା ହୋଇଛି। 'ଶୂନ୍ୟ ମୃତ୍ୟୁହାର' (Zero Casualty) ନୀତିକୁ ଆପଣାଇ ରାଜ୍ୟ ସରକାର ବାତ୍ୟା ପୂର୍ବରୁ ସୂଚନା ପ୍ରସାରଣ, ସ୍ଥାନାନ୍ତରଣ ଏବଂ ବାତ୍ୟା ଆଶ୍ରୟସ୍ଥଳୀ ନିର୍ମାଣ ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ଆଧୁନିକ ପ୍ରଯୁକ୍ତିବିଦ୍ୟା ଏବଂ ଡୋପ୍ଲର ରଡାର ସାହାଯ୍ୟରେ ବାତ୍ୟାର ଗତିପଥ ଓ ତୀବ୍ରତା ବିଷୟରେ ସଠିକ୍ ପୂର୍ବାନୁମାନ କରାଯାଇପାରୁଛି। ବାତ୍ୟା ପରବର୍ତ୍ତୀ ପୁନରୁଦ୍ଧାର କାର୍ଯ୍ୟରେ ଓଡ୍ରାଫ୍ (ODRAF) ଏବଂ ଏନଡିଆରଏଫ୍ (NDRF) ବାହିନୀର ଭୂମିକା ଅତ୍ୟନ୍ତ ପ୍ରଶଂସନୀୟ। ଜଳବାୟୁ ପରିବର୍ତ୍ତନ ଯୋଗୁଁ ବାତ୍ୟାର ପରିମାଣ ଓ ବେଗ ବୃଦ୍ଧି ପାଉଥିବା ବେଳେ, ଉପକୂଳରେ ହେନ୍ତାଳ ବଣ (Mangroves) ସୃଷ୍ଟି କରିବା ଏବଂ ବାତ୍ୟା ସହଣୀ ଭିତ୍ତିଭୂମି ଗଢ଼ିବା ଏବେକାର ମୁଖ୍ୟ ଆବଶ୍ୟକତା ପାଲଟିଛି।</span><br><br> ଅନୁଚ୍ଛେଦ ଅନୁଯାୟୀ, ଓଡ଼ିଶା ସରକାରଙ୍କ ବିପର୍ଯ୍ୟୟ ପରିଚାଳନାର ମୁଖ୍ୟ ଲକ୍ଷ୍ୟ କ’ଣ?",
+   o:['ଅଧିକ ଆର୍ଥିକ ଅନୁଦାନ ସଂଗ୍ରହ କରିବା','ସ୍ଥାନୀୟ ଶିଳ୍ପାୟନକୁ ବୃଦ୍ଧି କରିବା','ଶୂନ୍ୟ ମୃତ୍ୟୁହାର ନୀତି ଆପଣାଇବା','କେବଳ ସହରାଞ୍ଚଳକୁ ସୁରକ୍ଷା ଦେବା'],
+   a:2,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଓଡ଼ିଶାର ଭୌଗୋଳିକ ଅବସ୍ଥିତି ଏହାକୁ ପ୍ରାକୃତିକ ବିପର୍ଯ୍ୟୟ, ବିଶେଷ କରି ସାମୁଦ୍ରିକ ବାତ୍ୟା ପ୍ରତି ଅଧିକ ସମ୍ବେଦନଶୀଳ କରିଛି। ବଙ୍ଗୋପସାଗରରେ ସୃଷ୍ଟି ହେଉଥିବା ଲଘୁଚାପ କ୍ରମଶଃ ଘନୀଭୂତ ହୋଇ ଭୟଙ୍କର ବାତ୍ୟାର ରୂପ ନେଇଥାଏ, ଯାହା ଓଡ଼ିଶାର ଉପକୂଳବର୍ତ୍ତୀ ଜିଲ୍ଲାଗୁଡ଼ିକରେ ବ୍ୟାପକ ଧନଜୀବନ ହାନି କରିଥାଏ। ୧୯୯୯ ମସିହାର ମହାବାତ୍ୟାଠାରୁ ଆରମ୍ଭ କରି ନିକଟ ଅତୀତର ଫାଇଲିନ୍, ହୁଡ୍‌ହୁଡ୍, ଫୋନି, ଏବଂ ଅମ୍ଫାନ ଭଳି ବାତ୍ୟାଗୁଡ଼ିକ ରାଜ୍ୟର ଭିତ୍ତିଭୂମିକୁ ବାରମ୍ବାର ଦୋହଲାଇ ଦେଇଛନ୍ତି। ବାତ୍ୟା ସମୟରେ ପ୍ରବଳ ବେଗରେ ବହୁଥିବା ପବନ ସହିତ ସାମୁଦ୍ରିକ ଜୁଆର ଏବଂ ଅତି ପ୍ରବଳ ବର୍ଷା ଯୋଗୁଁ ଚାଷଜମି ନଷ୍ଟ ହେବା ସହ ଯୋଗାଯୋଗ ବିଚ୍ଛିନ୍ନ ହୋଇଯାଏ।<br><br>ତେବେ, ବିପର୍ଯ୍ୟୟ ପରିଚାଳନା କ୍ଷେତ୍ରରେ ଓଡ଼ିଶା ଏବେ ବିଶ୍ୱ ଦରବାରରେ ଏକ ମଡେଲ୍ ଭାବେ ଉଭା ହୋଇଛି। 'ଶୂନ୍ୟ ମୃତ୍ୟୁହାର' (Zero Casualty) ନୀତିକୁ ଆପଣାଇ ରାଜ୍ୟ ସରକାର ବାତ୍ୟା ପୂର୍ବରୁ ସୂଚନା ପ୍ରସାରଣ, ସ୍ଥାନାନ୍ତରଣ ଏବଂ ବାତ୍ୟା ଆଶ୍ରୟସ୍ଥଳୀ ନିର୍ମାଣ ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ଆଧୁନିକ ପ୍ରଯୁକ୍ତିବିଦ୍ୟା ଏବଂ ଡୋପ୍ଲର ରଡାର ସାହାଯ୍ୟରେ ବାତ୍ୟାର ଗତିପଥ ଓ ତୀବ୍ରତା ବିଷୟରେ ସଠିକ୍ ପୂର୍ବାନୁମାନ କରାଯାଇପାରୁଛି। ବାତ୍ୟା ପରବର୍ତ୍ତୀ ପୁନରୁଦ୍ଧାର କାର୍ଯ୍ୟରେ ଓଡ୍ରାଫ୍ (ODRAF) ଏବଂ ଏନଡିଆରଏଫ୍ (NDRF) ବାହିନୀର ଭୂମିକା ଅତ୍ୟନ୍ତ ପ୍ରଶଂସନୀୟ। ଜଳବାୟୁ ପରିବର୍ତ୍ତନ ଯୋଗୁଁ ବାତ୍ୟାର ପରିମାଣ ଓ ବେଗ ବୃଦ୍ଧି ପାଉଥିବା ବେଳେ, ଉପକୂଳରେ ହେନ୍ତାଳ ବଣ (Mangroves) ସୃଷ୍ଟି କରିବା ଏବଂ ବାତ୍ୟା ସହଣୀ ଭିତ୍ତିଭୂମି ଗଢ଼ିବା ଏବେକାର ମୁଖ୍ୟ ଆବଶ୍ୟକତା ପାଲଟିଛି।</span>) <br><br> ବାତ୍ୟାର ଗତିପଥ ଓ ତୀବ୍ରତା ଜାଣିବା ପାଇଁ କେଉଁ ପ୍ରଯୁକ୍ତିର ବ୍ୟବହାର କରାଯାଉଛି?",
+   o:['ସାମାଜିକ ଗଣମାଧ୍ୟମ','ଡୋପ୍ଲର ରଡାର','କୃତ୍ରିମ ବର୍ଷା ପ୍ରଯୁକ୍ତି','ଭୂତଳ ଜଳ ମାପକ ଯନ୍ତ୍ର'],
+   a:1,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଓଡ଼ିଶାର ଭୌଗୋଳିକ ଅବସ୍ଥିତି ଏହାକୁ ପ୍ରାକୃତିକ ବିପର୍ଯ୍ୟୟ, ବିଶେଷ କରି ସାମୁଦ୍ରିକ ବାତ୍ୟା ପ୍ରତି ଅଧିକ ସମ୍ବେଦନଶୀଳ କରିଛି। ବଙ୍ଗୋପସାଗରରେ ସୃଷ୍ଟି ହେଉଥିବା ଲଘୁଚାପ କ୍ରମଶଃ ଘନୀଭୂତ ହୋଇ ଭୟଙ୍କର ବାତ୍ୟାର ରୂପ ନେଇଥାଏ, ଯାହା ଓଡ଼ିଶାର ଉପକୂଳବର୍ତ୍ତୀ ଜିଲ୍ଲାଗୁଡ଼ିକରେ ବ୍ୟାପକ ଧନଜୀବନ ହାନି କରିଥାଏ। ୧୯୯୯ ମସିହାର ମହାବାତ୍ୟାଠାରୁ ଆରମ୍ଭ କରି ନିକଟ ଅତୀତର ଫାଇଲିନ୍, ହୁଡ୍‌ହୁଡ୍, ଫୋନି, ଏବଂ ଅମ୍ଫାନ ଭଳି ବାତ୍ୟାଗୁଡ଼ିକ ରାଜ୍ୟର ଭିତ୍ତିଭୂମିକୁ ବାରମ୍ବାର ଦୋହଲାଇ ଦେଇଛନ୍ତି। ବାତ୍ୟା ସମୟରେ ପ୍ରବଳ ବେଗରେ ବହୁଥିବା ପବନ ସହିତ ସାମୁଦ୍ରିକ ଜୁଆର ଏବଂ ଅତି ପ୍ରବଳ ବର୍ଷା ଯୋଗୁଁ ଚାଷଜମି ନଷ୍ଟ ହେବା ସହ ଯୋଗାଯୋଗ ବିଚ୍ଛିନ୍ନ ହୋଇଯାଏ।<br><br>ତେବେ, ବିପର୍ଯ୍ୟୟ ପରିଚାଳନା କ୍ଷେତ୍ରରେ ଓଡ଼ିଶା ଏବେ ବିଶ୍ୱ ଦରବାରରେ ଏକ ମଡେଲ୍ ଭାବେ ଉଭା ହୋଇଛି। 'ଶୂନ୍ୟ ମୃତ୍ୟୁହାର' (Zero Casualty) ନୀତିକୁ ଆପଣାଇ ରାଜ୍ୟ ସରକାର ବାତ୍ୟା ପୂର୍ବରୁ ସୂଚନା ପ୍ରସାରଣ, ସ୍ଥାନାନ୍ତରଣ ଏବଂ ବାତ୍ୟା ଆଶ୍ରୟସ୍ଥଳୀ ନିର୍ମାଣ ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ଆଧୁନିକ ପ୍ରଯୁକ୍ତିବିଦ୍ୟା ଏବଂ ଡୋପ୍ଲର ରଡାର ସାହାଯ୍ୟରେ ବାତ୍ୟାର ଗତିପଥ ଓ ତୀବ୍ରତା ବିଷୟରେ ସଠିକ୍ ପୂର୍ବାନୁମାନ କରାଯାଇପାରୁଛି। ବାତ୍ୟା ପରବର୍ତ୍ତୀ ପୁନରୁଦ୍ଧାର କାର୍ଯ୍ୟରେ ଓଡ୍ରାଫ୍ (ODRAF) ଏବଂ ଏନଡିଆରଏଫ୍ (NDRF) ବାହିନୀର ଭୂମିକା ଅତ୍ୟନ୍ତ ପ୍ରଶଂସନୀୟ। ଜଳବାୟୁ ପରିବର୍ତ୍ତନ ଯୋଗୁଁ ବାତ୍ୟାର ପରିମାଣ ଓ ବେଗ ବୃଦ୍ଧି ପାଉଥିବା ବେଳେ, ଉପକୂଳରେ ହେନ୍ତାଳ ବଣ (Mangroves) ସୃଷ୍ଟି କରିବା ଏବଂ ବାତ୍ୟା ସହଣୀ ଭିତ୍ତିଭୂମି ଗଢ଼ିବା ଏବେକାର ମୁଖ୍ୟ ଆବଶ୍ୟକତା ପାଲଟିଛି।</span> <br><br> ବାତ୍ୟା ସମୟରେ କେଉଁଟି ଏକ ପ୍ରାକୃତିକ ପ୍ରତିବନ୍ଧକ ବା ସୁରକ୍ଷା କବଚ ଭାବେ କାମ କରିପାରିବ?",
+   o:['ଉପକୂଳରେ ହେନ୍ତାଳ ବଣ ବା ମେନଗ୍ରୋଭ୍ ସୃଷ୍ଟି କରିବା','ନଦୀଗୁଡ଼ିକର ଗଭୀରତା ବଢ଼ାଇବା','ପାହାଡ଼ ପର୍ବତ କାଟି ରାସ୍ତା ନିର୍ମାଣ କରିବା','କେବଳ କଂକ୍ରିଟ୍ ପାଚେରୀ ନିର୍ମଣ କରିବା'],
+   a:0,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଓଡ଼ିଶାର ଭୌଗୋଳିକ ଅବସ୍ଥିତି ଏହାକୁ ପ୍ରାକୃତିକ ବିପର୍ଯ୍ୟୟ, ବିଶେଷ କରି ସାମୁଦ୍ରିକ ବାତ୍ୟା ପ୍ରତି ଅଧିକ ସମ୍ବେଦନଶୀଳ କରିଛି। ବଙ୍ଗୋପସାଗରରେ ସୃଷ୍ଟି ହେଉଥିବା ଲଘୁଚାପ କ୍ରମଶଃ ଘନୀଭୂତ ହୋଇ ଭୟଙ୍କର ବାତ୍ୟାର ରୂପ ନେଇଥାଏ, ଯାହା ଓଡ଼ିଶାର ଉପକୂଳବର୍ତ୍ତୀ ଜିଲ୍ଲାଗୁଡ଼ିକରେ ବ୍ୟାପକ ଧନଜୀବନ ହାନି କରିଥାଏ। ୧୯୯୯ ମସିହାର ମହାବାତ୍ୟାଠାରୁ ଆରମ୍ଭ କରି ନିକଟ ଅତୀତର ଫାଇଲିନ୍, ହୁଡ୍‌ହୁଡ୍, ଫୋନି, ଏବଂ ଅମ୍ଫାନ ଭଳି ବାତ୍ୟାଗୁଡ଼ିକ ରାଜ୍ୟର ଭିତ୍ତିଭୂମିକୁ ବାରମ୍ବାର ଦୋହଲାଇ ଦେଇଛନ୍ତି। ବାତ୍ୟା ସମୟରେ ପ୍ରବଳ ବେଗରେ ବହୁଥିବା ପବନ ସହିତ ସାମୁଦ୍ରିକ ଜୁଆର ଏବଂ ଅତି ପ୍ରବଳ ବର୍ଷା ଯୋଗୁଁ ଚାଷଜମି ନଷ୍ଟ ହେବା ସହ ଯୋଗାଯୋଗ ବିଚ୍ଛିନ୍ନ ହୋଇଯାଏ।<br><br>ତେବେ, ବିପର୍ଯ୍ୟୟ ପରିଚାଳନା କ୍ଷେତ୍ରରେ ଓଡ଼ିଶା ଏବେ ବିଶ୍ୱ ଦରବାରରେ ଏକ ମଡେଲ୍ ଭାବେ ଉଭା ହୋଇଛି। 'ଶୂନ୍ୟ ମୃତ୍ୟୁହାର' (Zero Casualty) ନୀତିକୁ ଆପଣାଇ ରାଜ୍ୟ ସରକାର ବାତ୍ୟା ପୂର୍ବରୁ ସୂଚନା ପ୍ରସାରଣ, ସ୍ଥାନାନ୍ତରଣ ଏବଂ ବାତ୍ୟା ଆଶ୍ରୟସ୍ଥଳୀ ନିର୍ମାଣ ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ଆଧୁନିକ ପ୍ରଯୁକ୍ତିବିଦ୍ୟା ଏବଂ ଡୋପ୍ଲର ରଡାର ସାହାଯ୍ୟରେ ବାତ୍ୟାର ଗତିପଥ ଓ ତୀବ୍ରତା ବିଷୟରେ ସଠିକ୍ ପୂର୍ବାନୁମାନ କରାଯାଇପାରୁଛି। ବାତ୍ୟା ପରବର୍ତ୍ତୀ ପୁନରୁଦ୍ଧାର କାର୍ଯ୍ୟରେ ଓଡ୍ରାଫ୍ (ODRAF) ଏବଂ ଏନଡିଆରଏଫ୍ (NDRF) ବାହିନୀର ଭୂମିକା ଅତ୍ୟନ୍ତ ପ୍ରଶଂସନୀୟ। ଜଳବାୟୁ ପରିବର୍ତ୍ତନ ଯୋଗୁଁ ବାତ୍ୟାର ପରିମାଣ ଓ ବେଗ ବୃଦ୍ଧି ପାଉଥିବା ବେଳେ, ଉପକୂଳରେ ହେନ୍ତାଳ ବଣ (Mangroves) ସୃଷ୍ଟି କରିବା ଏବଂ ବାତ୍ୟା ସହଣୀ ଭିତ୍ତିଭୂମି ଗଢ଼ିବା ଏବେକାର ମୁଖ୍ୟ ଆବଶ୍ୟକତା ପାଲଟିଛି।</span> <br><br> ଏହି ଅନୁଚ୍ଛେଦରେ ଉଲ୍ଲେଖ ଥିବା 'ବାତ୍ୟା ପରବର୍ତ୍ତୀ ପୁନରୁଦ୍ଧାର' କାର୍ଯ୍ୟରେ କିଏ ସହାୟତା କରନ୍ତି?",
+   o:['କେବଳ ବେସରକାରୀ ଶିକ୍ଷାନୁଷ୍ଠାନ','ବିଦେଶୀ ପର୍ଯ୍ୟଟକ ସଂଘ','ଓଡ୍ରାଫ୍ ଏବଂ ଏନଡିଆରଏଫ୍ ବାହିନୀ','କେବଳ ସ୍ଥାନୀୟ ବ୍ୟବସାୟୀ ସଂଘ'],
+   a:2,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଓଡ଼ିଶାର ଭୌଗୋଳିକ ଅବସ୍ଥିତି ଏହାକୁ ପ୍ରାକୃତିକ ବିପର୍ଯ୍ୟୟ, ବିଶେଷ କରି ସାମୁଦ୍ରିକ ବାତ୍ୟା ପ୍ରତି ଅଧିକ ସମ୍ବେଦନଶୀଳ କରିଛି। ବଙ୍ଗୋପସାଗରରେ ସୃଷ୍ଟି ହେଉଥିବା ଲଘୁଚାପ କ୍ରମଶଃ ଘନୀଭୂତ ହୋଇ ଭୟଙ୍କର ବାତ୍ୟାର ରୂପ ନେଇଥାଏ, ଯାହା ଓଡ଼ିଶାର ଉପକୂଳବର୍ତ୍ତୀ ଜିଲ୍ଲାଗୁଡ଼ିକରେ ବ୍ୟାପକ ଧନଜୀବନ ହାନି କରିଥାଏ। ୧୯୯୯ ମସିହାର ମହାବାତ୍ୟାଠାରୁ ଆରମ୍ଭ କରି ନିକଟ ଅତୀତର ଫାଇଲିନ୍, ହୁଡ୍‌ହୁଡ୍, ଫୋନି, ଏବଂ ଅମ୍ଫାନ ଭଳି ବାତ୍ୟାଗୁଡ଼ିକ ରାଜ୍ୟର ଭିତ୍ତିଭୂମିକୁ ବାରମ୍ବାର ଦୋହଲାଇ ଦେଇଛନ୍ତି। ବାତ୍ୟା ସମୟରେ ପ୍ରବଳ ବେଗରେ ବହୁଥିବା ପବନ ସହିତ ସାମୁଦ୍ରିକ ଜୁଆର ଏବଂ ଅତି ପ୍ରବଳ ବର୍ଷା ଯୋଗୁଁ ଚାଷଜମି ନଷ୍ଟ ହେବା ସହ ଯୋଗାଯୋଗ ବିଚ୍ଛିନ୍ନ ହୋଇଯାଏ।<br><br>ତେବେ, ବିପର୍ଯ୍ୟୟ ପରିଚାଳନା କ୍ଷେତ୍ରରେ ଓଡ଼ିଶା ଏବେ ବିଶ୍ୱ ଦରବାରରେ ଏକ ମଡେଲ୍ ଭାବେ ଉଭା ହୋଇଛି। 'ଶୂନ୍ୟ ମୃତ୍ୟୁହାର' (Zero Casualty) ନୀତିକୁ ଆପଣାଇ ରାଜ୍ୟ ସରକାର ବାତ୍ୟା ପୂର୍ବରୁ ସୂଚନା ପ୍ରସାରଣ, ସ୍ଥାନାନ୍ତରଣ ଏବଂ ବାତ୍ୟା ଆଶ୍ରୟସ୍ଥଳୀ ନିର୍ମାଣ ଉପରେ ଗୁରୁତ୍ୱ ଦେଉଛନ୍ତି। ଆଧୁନିକ ପ୍ରଯୁକ୍ତିବିଦ୍ୟା ଏବଂ ଡୋପ୍ଲର ରଡାର ସାହାଯ୍ୟରେ ବାତ୍ୟାର ଗତିପଥ ଓ ତୀବ୍ରତା ବିଷୟରେ ସଠିକ୍ ପୂର୍ବାନୁମାନ କରାଯାଇପାରୁଛି। ବାତ୍ୟା ପରବର୍ତ୍ତୀ ପୁନରୁଦ୍ଧାର କାର୍ଯ୍ୟରେ ଓଡ୍ରାଫ୍ (ODRAF) ଏବଂ ଏନଡିଆରଏଫ୍ (NDRF) ବାହିନୀର ଭୂମିକା ଅତ୍ୟନ୍ତ ପ୍ରଶଂସନୀୟ। ଜଳବାୟୁ ପରିବର୍ତ୍ତନ ଯୋଗୁଁ ବାତ୍ୟାର ପରିମାଣ ଓ ବେଗ ବୃଦ୍ଧି ପାଉଥିବା ବେଳେ, ଉପକୂଳରେ ହେନ୍ତାଳ ବଣ (Mangroves) ସୃଷ୍ଟି କରିବା ଏବଂ ବାତ୍ୟା ସହଣୀ ଭିତ୍ତିଭୂମି ଗଢ଼ିବା ଏବେକାର ମୁଖ୍ୟ ଆବଶ୍ୟକତା ପାଲଟିଛି।</span> <br><br> ଏହି ଅନୁଚ୍ଛେଦର ସ୍ୱର ଏବଂ ପ୍ରକୃତି କିପରି?",
+   o:['ଭୟଭୀତ ଏବଂ ନୈରାଶ୍ୟଜନକ','ସୂଚନାଧର୍ମୀ ଏବଂ ସଚେତନତା ମୂଳକ','ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ବ୍ୟକ୍ତିଗତ ଅଭିଜ୍ଞତା ମୂଳକ','କାଳ୍ପନିକ ଓ ଗପ ସଦୃଶ'],
+   a:1,
+   exp:'Refers to Passage'}
+
+
+
+
+
+    
+
+
+
+
+    
+];
+/* ===== End questions with explanations ===== */
+
+let answers={}, index=0, timeLeft, timerInt;
+
+window.onload = () => {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(saved){
+    if(saved.answers) answers = saved.answers; // restore previous answers
+    showScore(saved);
+  } else {
+    loader.classList.add("hidden");
+    instruction.classList.remove("hidden");
+  }
+};
+
+function startTest(){
+  instruction.classList.add("hidden");
+  test.classList.remove("hidden");
+  timeLeft=TEST_DURATION_MINUTES*60;
+  timerInt=setInterval(runTimer,1000);
+  buildGrid();loadQ();
+}
+
+function runTimer(){
+  if(timeLeft<=0){submitTest();return;}
+  timeLeft--;
+  timer.innerText=`${String(Math.floor(timeLeft/60)).padStart(2,"0")}:${String(timeLeft%60).padStart(2,"0")}`;
+}
+
+function loadQ(){
+  const q = questions[index];
+  question.innerHTML = (index + 1) + ". " + q.q;
+
+  /* ===== IMAGE LOGIC ===== */
+  imgWrap.classList.add("hidden");
+  qImg.style.display = "none";
+  imgLoader.style.display = "block";
+
+  if(q.img){
+    imgWrap.classList.remove("hidden");
+    qImg.src = q.img;
+
+    qImg.onload = () => {
+      imgLoader.style.display = "none";
+      qImg.style.display = "block";
+    };
+
+    qImg.onerror = () => {
+      imgWrap.classList.add("hidden");
+    };
+  }
+
+  options.innerHTML="";
+  q.o.forEach((t,i)=>{
+    const d=document.createElement("div");
+    d.className="option"+(answers[index]===i?" selected":"");
+    d.innerText=t;
+    d.onclick=()=>{
+      answers[index]=answers[index]===i?null:i;
+
+      /* ===== Save answers to localStorage ===== */
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      saved.answers = answers;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      /* ===== End save ===== */
+
+      loadQ();
+      updateGrid();
+    };
+    options.appendChild(d);
+  });
+
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === questions.length - 1;
+}
+
+function nextQ(){index++;loadQ();}
+function prevQ(){index--;loadQ();}
+
+function buildGrid(){
+  grid.innerHTML="";
+  questions.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.innerText=i+1;
+    d.onclick=()=>{index=i;loadQ();};
+    grid.appendChild(d);
+  });
+}
+
+function updateGrid(){
+  [...grid.children].forEach((d,i)=>d.classList.toggle("attempted",answers[i]!=null));
+}
+
+function submitTest(){
+  clearInterval(timerInt);
+  test.classList.add("hidden");
+  loader.classList.remove("hidden");
+  loader.querySelector("p").innerText="Saving score & calculating rank…";
+
+  let correct=0,wrong=0;
+  questions.forEach((q,i)=>{
+    if(answers[i]==null)return;
+    answers[i]===q.a?correct++:wrong++;
+  });
+
+  const score=+(correct-wrong*NEGATIVE_MARK).toFixed(2);
+
+  const baseData={
+    phone:user.phone,
+    name:user.name,
+    score,correct,wrong,
+    unattempted:questions.length-correct-wrong,
+    updatedAt:Date.now()
+  };
+
+  db.collection("tests").doc(TEST_ID).collection("results").doc(user.phone)
+  .set(baseData,{merge:true})
+  .then(()=>calculateRank(baseData));
+}
+
+function calculateRank(myData){
+  db.collection("tests").doc(TEST_ID).collection("results").get()
+  .then(snap=>{
+    const arr=snap.docs.map(d=>({...d.data(),id:d.id}));
+    arr.sort((a,b)=>b.score-a.score);
+    const rank=arr.findIndex(x=>x.id===user.phone)+1;
+    myData.rankText=`${rank} / ${arr.length}`;
+    myData.answers=answers;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(myData));
+    showScore(myData);
+  });
+}
+
+function showScore(r){
+  loader.classList.add("hidden");
+  score.classList.remove("hidden");
+  userScore.innerText=`Hi ${r.name}, your score is ${r.score}`;
+  stats.innerHTML=`Correct: ${r.correct}<br>Wrong: ${r.wrong}<br>Unattempted: ${r.unattempted}<br><b>Rank: ${r.rankText}</b>`;
+  filterQ("all",document.querySelector(".filter button"));
+}
+
+function filterQ(type,btn){
+  document.querySelectorAll(".filter button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  review.innerHTML="";
+  questions.forEach((q,i)=>{
+    const a=answers[i];
+    if(type==="correct"&&a!==q.a)return;
+    if(type==="wrong"&&(a==null||a===q.a))return;
+    if(type==="unattempted"&&a!=null)return;
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <b>${q.q}</b><br>
+      Your: ${a!=null?q.o[a]:"—"}<br>
+      Correct: ${q.o[q.a]}<br>
+      <details>
+        <summary>Show Explanation</summary>
+        <p>${q.exp || "No explanation provided."}</p>
+      </details>
+    `;
+    review.appendChild(c);
+  });
+}
+
+function reattempt(){popup.style.display="flex";}
+function confirmReattempt(){localStorage.removeItem(STORAGE_KEY);location.reload();}
+</script>
+</body>
+</html>
