@@ -15,7 +15,7 @@ async function generateExamCards() {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
-                    <h4>OSSC CGL ODIA SECTIONAL MOCKTEST - ${count}</h4>
+                    <h4>OSSSC RI & ARI ODIA SECTIONAL MOCKTEST - ${count}</h4>
                     <p>TOTAL QUESTIONS - 20</p>
                     <p>TOTAL TIME - 20 Min</p>
                     <a href="${fileName}">Start Exam</a>
