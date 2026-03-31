@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odia Abhyas</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  .q-image-wrap{margin:12px 0;display:flex;justify-content:center;align-items:center}
+  .img-loader{width:50px;height:50px;border:5px solid #ddd;border-top:5px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  .q-image{max-width:100%;border-radius:12px;display:none}
+  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{margin:0;background:#f4f6f8;padding:0}
+  .loader{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+  .circle{width:70px;height:70px;border:7px solid #ddd;border-top:7px solid #2c5364;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hidden{display:none}
+  .header{background:#fff;padding:12px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd}
+  .container{padding:14px}
+  button{padding:12px;border:none;border-radius:10px;background:#2c5364;color:#fff;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.4}
+  .q-inst{font-size:14px}
+  .question{font-weight:bold;margin:8px 0}
+  .option{background:#fff;border:1px solid #ccc;padding:12px;border-radius:10px;margin-bottom:10px;cursor:pointer}
+  .option.selected{background:#e8f1f5;border-color:#2c5364}
+  .nav{display:flex;justify-content:space-between;margin:10px 0}
+  .grid{display:flex;flex-wrap:wrap;gap:6px}
+  .grid div{width:32px;height:32px;border:1px solid #2c5364;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .grid .attempted{background:#2c5364;color:#fff;border-radius:50%}
+  .score{padding:16px}
+  .card{background:#fff;padding:12px;border-radius:12px;margin-bottom:10px}
+  .filter{display:flex;gap:6px;margin-top:10px}
+  .filter button{flex:1;background:#ccc;color:#000}
+  .filter .active{background:#2c5364;color:#fff}
+  .popup{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center}
+  .popup-box{background:#fff;padding:18px;border-radius:14px;width:85%;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="loader" class="loader">
+  <div class="circle"></div>
+  <p>Checking user…</p>
+</div>
+
+<div id="instruction" class="hidden container">
+  <h3>OSSSC RI Odia Sectional - 4</h3>
+  <ul>
+    <li>Time: 20 Minutes</li>
+      <li>Total Questions: 20 </li>
+    <li>Negative Marking: 0.25 per wrong answer</li>
+    <li>Submit anytime</li>
+  </ul>
+  <button onclick="startTest()">Start Test</button>
+</div>
+
+<div id="test" class="hidden">
+  <div class="header">
+    <b></b>
+      <div class="q-inst">OSSSC RI Odia Sectional - 4</div>
+    <span id="timer">20:00</span>
+  </div>
+  <div class="container">
+    
+    
+
+    <div id="imgWrap" class="q-image-wrap hidden">
+      <div id="imgLoader" class="img-loader"></div>
+      <img id="qImg" class="q-image">
+    </div>
+<div class="question" id="question"></div>
+    <div id="options"></div>
+
+    <div class="nav">
+      <button id="prevBtn" onclick="prevQ()">Previous</button>
+      <button id="nextBtn" onclick="nextQ()">Next</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <br>
+    <button onclick="submitTest()">Submit Test</button>
+  </div>
+</div>
+
+<div id="score" class="hidden score">
+  <h3>OSSSC RI Odia Sectional - 4</h3>
+  <p id="userScore"></p>
+  <div class="card" id="stats"></div>
+
+  <div class="filter">
+    <button class="active" onclick="filterQ('all',this)">All</button>
+    <button onclick="filterQ('correct',this)">Correct</button>
+    <button onclick="filterQ('wrong',this)">Wrong</button>
+    <button onclick="filterQ('unattempted',this)">Unattempted</button>
+  </div>
+
+  <div id="review"></div>
+  <br>
+  <button onclick="reattempt()">Reattempt</button>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-box">
+    <p>Your previous score & rank will be replaced.</p>
+    <button onclick="confirmReattempt()">OK</button>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+apiKey: "AIzaSyAm8LD9iSm24vG2rc_bBSjXuATXxs7-lbE",
+  authDomain: "odia-abhyas.firebaseapp.com",
+  projectId: "odia-abhyas"
+});
+const db = firebase.firestore();
+
+const TEST_ID = "OSSSC RI Odia Sectional - 4";
+const STORAGE_KEY = "RESULT_" + TEST_ID;
+const TEST_DURATION_MINUTES = 20;
+const NEGATIVE_MARK = 0.25;
+
+const user = {
+  phone: localStorage.getItem("user_phone"),
+  name: localStorage.getItem("user_name")
+};
+if(!user.phone){ alert("Login required"); throw ""; }
+
+/* ===== Added explanations to questions ===== */
+const questions = [
+
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଏକବିଂଶ ଶତାବ୍ଦୀର ସବୁଠାରୁ ବିପ୍ଳବୀ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ହେଉଛି କୃତ୍ରିମ ବୁଦ୍ଧିମତ୍ତା ବା ଆର୍ଟିଫିସିଆଲ୍ ଇଣ୍ଟେଲିଜେନ୍ସ (AI)। ଏହା କେବଳ କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନର ଏକ ଶାଖା ନୁହେଁ, ବରଂ ମାନବ ସଭ୍ୟତାର କାର୍ଯ୍ୟଶୈଳୀକୁ ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ବଦଳାଇ ଦେବାର ଏକ ସାମର୍ଥ୍ୟ। ଏହାର ମୂଳ ଲକ୍ଷ୍ୟ ହେଉଛି ମେସିନ୍ ବା ଯନ୍ତ୍ର ମଧ୍ୟରେ ମଣିଷ ଭଳି ଚିନ୍ତା କରିବା, ଶିଖିବା ଏବଂ ନିଷ୍ପତ୍ତି ନେବାର ଦକ୍ଷତା ସୃଷ୍ଟି କରିବା। ଆଜିର ସମୟରେ ଆମେ ବ୍ୟବହାର କରୁଥିବା ସ୍ମାର୍ଟଫୋନ୍, ସୋସିଆଲ ମିଡିଆର ଆଲଗୋରିଦମ୍, ସ୍ୱୟଂଚାଳିତ କାର୍ଯ୍ୟ ଏବଂ ଚାଟ୍‌ବୋଟ୍‌ ପଛରେ ଏହି AI ପ୍ରଯୁକ୍ତିର ପ୍ରଭାବ ରହିଛି। ବିଶେଷ କରି 'ମେସିନ୍ ଲର୍ନିଂ' ଏବଂ 'ଡିପ୍ ଲର୍ନିଂ' ମାଧ୍ୟମରେ ଏହା ବିପୁଳ ପରିମାଣର ତଥ୍ୟକୁ ବିଶ୍ଳେଷଣ କରି ଭବିଷ୍ୟବାଣୀ କରିବାରେ ସକ୍ଷମ ହୋଇଛି।<br><br>ତେବେ AIର ଅଭ୍ୟୁଦୟ ଯେତିକି ସୁଯୋଗ ଆଣିଛି, ସେତିକି ଆହ୍ୱାନ ମଧ୍ୟ ସୃଷ୍ଟି କରିଛି। ଶିଳ୍ପ ଓ ବାଣିଜ୍ୟ କ୍ଷେତ୍ରରେ ସ୍ୱୟଂଚାଳିତ ବ୍ୟବହାର (Automation) ଯୋଗୁଁ ଅନେକ ପାରମ୍ପରିକ ନିଯୁକ୍ତି କ୍ଷେତ୍ର ପ୍ରଭାବିତ ହେବାର ଆଶଙ୍କା ରହିଛି। ଏହାବ୍ୟତୀତ, ତଥ୍ୟର ଗୋପନୀୟତା (Data Privacy) ଏବଂ ନୈତିକତା (Ethics) କୁ ନେଇ ମଧ୍ୟ ବିଭିନ୍ନ ପ୍ରଶ୍ନବାଚୀ ସୃଷ୍ଟି ହୋଇଛି। ଯଦିଓ AI ମଣିଷର କାର୍ଯ୍ୟକୁ ସହଜ ଓ ଦ୍ରୁତ କରିବାରେ ସହାୟକ ହେଉଛି, ତଥାପି ଏହାର ଅତ୍ୟଧିକ ନିର୍ଭରଶୀଳତା ମାନବୀୟ କ୍ରିୟାଶୀଳତାକୁ ହ୍ରାସ କରିପାରେ। ତେଣୁ ଏହି ବଳିଷ୍ଠ ପ୍ରଯୁକ୍ତିର ବିକାଶ ସହିତ ଏହାର ନିୟନ୍ତ୍ରଣ ଓ ସଠିକ୍ ବିନିଯୋଗ ପାଇଁ ଉପଯୁକ୍ତ ନୀତି ଓ ନିୟମର ଆବଶ୍ୟକତା ଅପରିହାର୍ଯ୍ୟ।</span><br><br> ଅନୁଚ୍ଛେଦ ଅନୁସାରେ କୃତ୍ରିମ ବୁଦ୍ଧିମତ୍ତାର ମୂଳ ଲକ୍ଷ୍ୟ କ’ଣ?",
+   o:['କମ୍ପ୍ୟୁଟରର ଗତିକୁ କମାଇବା','ଯନ୍ତ୍ର ମଧ୍ୟରେ ମଣିଷ ଭଳି ଚିନ୍ତା କରିବା ଓ ନିଷ୍ପତ୍ତି ନେବାର ଦକ୍ଷତା ସୃଷ୍ଟି କରିବା','ସମସ୍ତ ମାନବୀୟ କାର୍ଯ୍ୟକୁ ବନ୍ଦ କରିଦେବା','କେବଳ ଇଣ୍ଟରନେଟ୍‌ର ବ୍ୟବହାର ବୃଦ୍ଧି କରିବା'],
+   a:1,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'>ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଏକବିଂଶ ଶତାବ୍ଦୀର ସବୁଠାରୁ ବିପ୍ଳବୀ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ହେଉଛି କୃତ୍ରିମ ବୁଦ୍ଧିମତ୍ତା ବା ଆର୍ଟିଫିସିଆଲ୍ ଇଣ୍ଟେଲିଜେନ୍ସ (AI)। ଏହା କେବଳ କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନର ଏକ ଶାଖା ନୁହେଁ, ବରଂ ମାନବ ସଭ୍ୟତାର କାର୍ଯ୍ୟଶୈଳୀକୁ ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ବଦଳାଇ ଦେବାର ଏକ ସାମର୍ଥ୍ୟ। ଏହାର ମୂଳ ଲକ୍ଷ୍ୟ ହେଉଛି ମେସିନ୍ ବା ଯନ୍ତ୍ର ମଧ୍ୟରେ ମଣିଷ ଭଳି ଚିନ୍ତା କରିବା, ଶିଖିବା ଏବଂ ନିଷ୍ପତ୍ତି ନେବାର ଦକ୍ଷତା ସୃଷ୍ଟି କରିବା। ଆଜିର ସମୟରେ ଆମେ ବ୍ୟବହାର କରୁଥିବା ସ୍ମାର୍ଟଫୋନ୍, ସୋସିଆଲ ମିଡିଆର ଆଲଗୋରିଦମ୍, ସ୍ୱୟଂଚାଳିତ କାର୍ଯ୍ୟ ଏବଂ ଚାଟ୍‌ବୋଟ୍‌ ପଛରେ ଏହି AI ପ୍ରଯୁକ୍ତିର ପ୍ରଭାବ ରହିଛି। ବିଶେଷ କରି 'ମେସିନ୍ ଲର୍ନିଂ' ଏବଂ 'ଡିପ୍ ଲର୍ନିଂ' ମାଧ୍ୟମରେ ଏହା ବିପୁଳ ପରିମାଣର ତଥ୍ୟକୁ ବିଶ୍ଳେଷଣ କରି ଭବିଷ୍ୟବାଣୀ କରିବାରେ ସକ୍ଷମ ହୋଇଛି।<br><br>ତେବେ AIର ଅଭ୍ୟୁଦୟ ଯେତିକି ସୁଯୋଗ ଆଣିଛି, ସେତିକି ଆହ୍ୱାନ ମଧ୍ୟ ସୃଷ୍ଟି କରିଛି। ଶିଳ୍ପ ଓ ବାଣିଜ୍ୟ କ୍ଷେତ୍ରରେ ସ୍ୱୟଂଚାଳିତ ବ୍ୟବହାର (Automation) ଯୋଗୁଁ ଅନେକ ପାରମ୍ପରିକ ନିଯୁକ୍ତି କ୍ଷେତ୍ର ପ୍ରଭାବିତ ହେବାର ଆଶଙ୍କା ରହିଛି। ଏହାବ୍ୟତୀତ, ତଥ୍ୟର ଗୋପନୀୟତା (Data Privacy) ଏବଂ ନୈତିକତା (Ethics) କୁ ନେଇ ମଧ୍ୟ ବିଭିନ୍ନ ପ୍ରଶ୍ନବାଚୀ ସୃଷ୍ଟି ହୋଇଛି। ଯଦିଓ AI ମଣିଷର କାର୍ଯ୍ୟକୁ ସହଜ ଓ ଦ୍ରୁତ କରିବାରେ ସହାୟକ ହେଉଛି, ତଥାପି ଏହାର ଅତ୍ୟଧିକ ନିର୍ଭରଶୀଳତା ମାନବୀୟ କ୍ରିୟାଶୀଳତାକୁ ହ୍ରାସ କରିପାରେ। ତେଣୁ ଏହି ବଳିଷ୍ଠ ପ୍ରଯୁକ୍ତିର ବିକାଶ ସହିତ ଏହାର ନିୟନ୍ତ୍ରଣ ଓ ସଠିକ୍ ବିନିଯୋଗ ପାଇଁ ଉପଯୁକ୍ତ ନୀତି ଓ ନିୟମର ଆବଶ୍ୟକତା ଅପରିହାର୍ଯ୍ୟ।</span><br><br> AI ପ୍ରଯୁକ୍ତିର ଅତ୍ୟଧିକ ନିର୍ଭରଶୀଳତା ଯୋଗୁଁ କେଉଁ ସମସ୍ୟା ଉପୁଜିପାରେ?",
+   o:['ମାନବୀୟ କ୍ରିୟାଶୀଳତା ହ୍ରାସ ପାଇବା','ତଥ୍ୟ ବିଶ୍ଳେଷଣ ବନ୍ଦ ହୋଇଯିବା','ଇଣ୍ଟରନେଟ୍‌ ସମ୍ପୂର୍ଣ୍ଣ ସୁରକ୍ଷିତ ହୋଇଯିବା','କୌଣସି ନୂତନ ନିଯୁକ୍ତି ସୃଷ୍ଟି ନହେବା'],
+   a:0,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଏକବିଂଶ ଶତାବ୍ଦୀର ସବୁଠାରୁ ବିପ୍ଳବୀ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ହେଉଛି କୃତ୍ରିମ ବୁଦ୍ଧିମତ୍ତା ବା ଆର୍ଟିଫିସିଆଲ୍ ଇଣ୍ଟେଲିଜେନ୍ସ (AI)। ଏହା କେବଳ କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନର ଏକ ଶାଖା ନୁହେଁ, ବରଂ ମାନବ ସଭ୍ୟତାର କାର୍ଯ୍ୟଶୈଳୀକୁ ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ବଦଳାଇ ଦେବାର ଏକ ସାମର୍ଥ୍ୟ। ଏହାର ମୂଳ ଲକ୍ଷ୍ୟ ହେଉଛି ମେସିନ୍ ବା ଯନ୍ତ୍ର ମଧ୍ୟରେ ମଣିଷ ଭଳି ଚିନ୍ତା କରିବା, ଶିଖିବା ଏବଂ ନିଷ୍ପତ୍ତି ନେବାର ଦକ୍ଷତା ସୃଷ୍ଟି କରିବା। ଆଜିର ସମୟରେ ଆମେ ବ୍ୟବହାର କରୁଥିବା ସ୍ମାର୍ଟଫୋନ୍, ସୋସିଆଲ ମିଡିଆର ଆଲଗୋରିଦମ୍, ସ୍ୱୟଂଚାଳିତ କାର୍ଯ୍ୟ ଏବଂ ଚାଟ୍‌ବୋଟ୍‌ ପଛରେ ଏହି AI ପ୍ରଯୁକ୍ତିର ପ୍ରଭାବ ରହିଛି। ବିଶେଷ କରି 'ମେସିନ୍ ଲର୍ନିଂ' ଏବଂ 'ଡିପ୍ ଲର୍ନିଂ' ମାଧ୍ୟମରେ ଏହା ବିପୁଳ ପରିମାଣର ତଥ୍ୟକୁ ବିଶ୍ଳେଷଣ କରି ଭବିଷ୍ୟବାଣୀ କରିବାରେ ସକ୍ଷମ ହୋଇଛି।<br><br>ତେବେ AIର ଅଭ୍ୟୁଦୟ ଯେତିକି ସୁଯୋଗ ଆଣିଛି, ସେତିକି ଆହ୍ୱାନ ମଧ୍ୟ ସୃଷ୍ଟି କରିଛି। ଶିଳ୍ପ ଓ ବାଣିଜ୍ୟ କ୍ଷେତ୍ରରେ ସ୍ୱୟଂଚାଳିତ ବ୍ୟବହାର (Automation) ଯୋଗୁଁ ଅନେକ ପାରମ୍ପରିକ ନିଯୁକ୍ତି କ୍ଷେତ୍ର ପ୍ରଭାବିତ ହେବାର ଆଶଙ୍କା ରହିଛି। ଏହାବ୍ୟତୀତ, ତଥ୍ୟର ଗୋପନୀୟତା (Data Privacy) ଏବଂ ନୈତିକତା (Ethics) କୁ ନେଇ ମଧ୍ୟ ବିଭିନ୍ନ ପ୍ରଶ୍ନବାଚୀ ସୃଷ୍ଟି ହୋଇଛି। ଯଦିଓ AI ମଣିଷର କାର୍ଯ୍ୟକୁ ସହଜ ଓ ଦ୍ରୁତ କରିବାରେ ସହାୟକ ହେଉଛି, ତଥାପି ଏହାର ଅତ୍ୟଧିକ ନିର୍ଭରଶୀଳତା ମାନବୀୟ କ୍ରିୟାଶୀଳତାକୁ ହ୍ରାସ କରିପାରେ। ତେଣୁ ଏହି ବଳିଷ୍ଠ ପ୍ରଯୁକ୍ତିର ବିକାଶ ସହିତ ଏହାର ନିୟନ୍ତ୍ରଣ ଓ ସଠିକ୍ ବିନିଯୋଗ ପାଇଁ ଉପଯୁକ୍ତ ନୀତି ଓ ନିୟମର ଆବଶ୍ୟକତା ଅପରିହାର୍ଯ୍ୟ। </span><br><br> AI କିପରି ବିପୁଳ ପରିମାଣର ତଥ୍ୟ ବିଶ୍ଳେଷଣ କରି ଭବିଷ୍ୟବାଣୀ କରିଥାଏ?",
+   o:['କେବଳ ସ୍ମାର୍ଟଫୋନ୍‌ ମାଧ୍ୟମରେ','ମେସିନ୍ ଲର୍ନିଂ ଏବଂ ଡିପ୍ ଲର୍ନିଂ ମାଧ୍ୟମରେ','ସାମାଜିକ ଗଣମାଧ୍ୟମର ଚାଟ୍‌ବୋଟ୍‌ ଦ୍ୱାରା','କେବଳ ପୁରୁଣା ପଦ୍ଧତିର ଗଣନା ଦ୍ୱାରା'],
+   a:1,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'>ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଏକବିଂଶ ଶତାବ୍ଦୀର ସବୁଠାରୁ ବିପ୍ଳବୀ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ହେଉଛି କୃତ୍ରିମ ବୁଦ୍ଧିମତ୍ତା ବା ଆର୍ଟିଫିସିଆଲ୍ ଇଣ୍ଟେଲିଜେନ୍ସ (AI)। ଏହା କେବଳ କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନର ଏକ ଶାଖା ନୁହେଁ, ବରଂ ମାନବ ସଭ୍ୟତାର କାର୍ଯ୍ୟଶୈଳୀକୁ ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ବଦଳାଇ ଦେବାର ଏକ ସାମର୍ଥ୍ୟ। ଏହାର ମୂଳ ଲକ୍ଷ୍ୟ ହେଉଛି ମେସିନ୍ ବା ଯନ୍ତ୍ର ମଧ୍ୟରେ ମଣିଷ ଭଳି ଚିନ୍ତା କରିବା, ଶିଖିବା ଏବଂ ନିଷ୍ପତ୍ତି ନେବାର ଦକ୍ଷତା ସୃଷ୍ଟି କରିବା। ଆଜିର ସମୟରେ ଆମେ ବ୍ୟବହାର କରୁଥିବା ସ୍ମାର୍ଟଫୋନ୍, ସୋସିଆଲ ମିଡିଆର ଆଲଗୋରିଦମ୍, ସ୍ୱୟଂଚାଳିତ କାର୍ଯ୍ୟ ଏବଂ ଚାଟ୍‌ବୋଟ୍‌ ପଛରେ ଏହି AI ପ୍ରଯୁକ୍ତିର ପ୍ରଭାବ ରହିଛି। ବିଶେଷ କରି 'ମେସିନ୍ ଲର୍ନିଂ' ଏବଂ 'ଡିପ୍ ଲର୍ନିଂ' ମାଧ୍ୟମରେ ଏହା ବିପୁଳ ପରିମାଣର ତଥ୍ୟକୁ ବିଶ୍ଳେଷଣ କରି ଭବିଷ୍ୟବାଣୀ କରିବାରେ ସକ୍ଷମ ହୋଇଛି।<br><br>ତେବେ AIର ଅଭ୍ୟୁଦୟ ଯେତିକି ସୁଯୋଗ ଆଣିଛି, ସେତିକି ଆହ୍ୱାନ ମଧ୍ୟ ସୃଷ୍ଟି କରିଛି। ଶିଳ୍ପ ଓ ବାଣିଜ୍ୟ କ୍ଷେତ୍ରରେ ସ୍ୱୟଂଚାଳିତ ବ୍ୟବହାର (Automation) ଯୋଗୁଁ ଅନେକ ପାରମ୍ପରିକ ନିଯୁକ୍ତି କ୍ଷେତ୍ର ପ୍ରଭାବିତ ହେବାର ଆଶଙ୍କା ରହିଛି। ଏହାବ୍ୟତୀତ, ତଥ୍ୟର ଗୋପନୀୟତା (Data Privacy) ଏବଂ ନୈତିକତା (Ethics) କୁ ନେଇ ମଧ୍ୟ ବିଭିନ୍ନ ପ୍ରଶ୍ନବାଚୀ ସୃଷ୍ଟି ହୋଇଛି। ଯଦିଓ AI ମଣିଷର କାର୍ଯ୍ୟକୁ ସହଜ ଓ ଦ୍ରୁତ କରିବାରେ ସହାୟକ ହେଉଛି, ତଥାପି ଏହାର ଅତ୍ୟଧିକ ନିର୍ଭରଶୀଳତା ମାନବୀୟ କ୍ରିୟାଶୀଳତାକୁ ହ୍ରାସ କରିପାରେ। ତେଣୁ ଏହି ବଳିଷ୍ଠ ପ୍ରଯୁକ୍ତିର ବିକାଶ ସହିତ ଏହାର ନିୟନ୍ତ୍ରଣ ଓ ସଠିକ୍ ବିନିଯୋଗ ପାଇଁ ଉପଯୁକ୍ତ ନୀତି ଓ ନିୟମର ଆବଶ୍ୟକତା ଅପରିହାର୍ଯ୍ୟ।</span><br><br> ଅନୁଚ୍ଛେଦରେ ଉଲ୍ଲେଖ ଥିବା 'ନିଯୁକ୍ତି କ୍ଷେତ୍ର ପ୍ରଭାବିତ ହେବାର ଆଶଙ୍କା' କାହିଁକି ରହିଛି?",
+   o:['ଲୋକମାନେ କାମ କରିବାକୁ ଇଚ୍ଛା କରୁନଥିବାରୁ','ଶିଳ୍ପ ଓ ବାଣିଜ୍ୟରେ ସ୍ୱୟଂଚାଳିତ ବ୍ୟବହାର ବା Automation ଯୋଗୁଁ','ସରକାରୀ ନିୟମରେ ପରିବର୍ତ୍ତନ ହେଉଥିବାରୁ','କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନର ଅଭାବ ଯୋଗୁଁ'],
+   a:1,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'>ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଏକବିଂଶ ଶତାବ୍ଦୀର ସବୁଠାରୁ ବିପ୍ଳବୀ ବୈଷୟିକ ଜ୍ଞାନକୌଶଳ ହେଉଛି କୃତ୍ରିମ ବୁଦ୍ଧିମତ୍ତା ବା ଆର୍ଟିଫିସିଆଲ୍ ଇଣ୍ଟେଲିଜେନ୍ସ (AI)। ଏହା କେବଳ କମ୍ପ୍ୟୁଟର ବିଜ୍ଞାନର ଏକ ଶାଖା ନୁହେଁ, ବରଂ ମାନବ ସଭ୍ୟତାର କାର୍ଯ୍ୟଶୈଳୀକୁ ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ବଦଳାଇ ଦେବାର ଏକ ସାମର୍ଥ୍ୟ। ଏହାର ମୂଳ ଲକ୍ଷ୍ୟ ହେଉଛି ମେସିନ୍ ବା ଯନ୍ତ୍ର ମଧ୍ୟରେ ମଣିଷ ଭଳି ଚିନ୍ତା କରିବା, ଶିଖିବା ଏବଂ ନିଷ୍ପତ୍ତି ନେବାର ଦକ୍ଷତା ସୃଷ୍ଟି କରିବା। ଆଜିର ସମୟରେ ଆମେ ବ୍ୟବହାର କରୁଥିବା ସ୍ମାର୍ଟଫୋନ୍, ସୋସିଆଲ ମିଡିଆର ଆଲଗୋରିଦମ୍, ସ୍ୱୟଂଚାଳିତ କାର୍ଯ୍ୟ ଏବଂ ଚାଟ୍‌ବୋଟ୍‌ ପଛରେ ଏହି AI ପ୍ରଯୁକ୍ତିର ପ୍ରଭାବ ରହିଛି। ବିଶେଷ କରି 'ମେସିନ୍ ଲର୍ନିଂ' ଏବଂ 'ଡିପ୍ ଲର୍ନିଂ' ମାଧ୍ୟମରେ ଏହା ବିପୁଳ ପରିମାଣର ତଥ୍ୟକୁ ବିଶ୍ଳେଷଣ କରି ଭବିଷ୍ୟବାଣୀ କରିବାରେ ସକ୍ଷମ ହୋଇଛି।<br><br>ତେବେ AIର ଅଭ୍ୟୁଦୟ ଯେତିକି ସୁଯୋଗ ଆଣିଛି, ସେତିକି ଆହ୍ୱାନ ମଧ୍ୟ ସୃଷ୍ଟି କରିଛି। ଶିଳ୍ପ ଓ ବାଣିଜ୍ୟ କ୍ଷେତ୍ରରେ ସ୍ୱୟଂଚାଳିତ ବ୍ୟବହାର (Automation) ଯୋଗୁଁ ଅନେକ ପାରମ୍ପରିକ ନିଯୁକ୍ତି କ୍ଷେତ୍ର ପ୍ରଭାବିତ ହେବାର ଆଶଙ୍କା ରହିଛି। ଏହାବ୍ୟତୀତ, ତଥ୍ୟର ଗୋପନୀୟତା (Data Privacy) ଏବଂ ନୈତିକତା (Ethics) କୁ ନେଇ ମଧ୍ୟ ବିଭିନ୍ନ ପ୍ରଶ୍ନବାଚୀ ସୃଷ୍ଟି ହୋଇଛି। ଯଦିଓ AI ମଣିଷର କାର୍ଯ୍ୟକୁ ସହଜ ଓ ଦ୍ରୁତ କରିବାରେ ସହାୟକ ହେଉଛି, ତଥାପି ଏହାର ଅତ୍ୟଧିକ ନିର୍ଭରଶୀଳତା ମାନବୀୟ କ୍ରିୟାଶୀଳତାକୁ ହ୍ରାସ କରିପାରେ। ତେଣୁ ଏହି ବଳିଷ୍ଠ ପ୍ରଯୁକ୍ତିର ବିକାଶ ସହିତ ଏହାର ନିୟନ୍ତ୍ରଣ ଓ ସଠିକ୍ ବିନିଯୋଗ ପାଇଁ ଉପଯୁକ୍ତ ନୀତି ଓ ନିୟମର ଆବଶ୍ୟକତା ଅପରିହାର୍ଯ୍ୟ।</span><br><br> ଏହି ଅନୁଚ୍ଛେଦର ସାରାଂଶ କିମ୍ବା ମୁଖ୍ୟ ବିଷୟବସ୍ତୁ କେଉଁଟି?",
+   o:['କେବଳ ସୋସିଆଲ ମିଡିଆର ବ୍ୟବହାର ବିଷୟରେ','AIର ପ୍ରଭାବ, ସୁଯୋଗ ଏବଂ ଏହାର ନୈତିକ ନିୟନ୍ତ୍ରଣର ଆବଶ୍ୟକତା','କମ୍ପ୍ୟୁଟରର ଇତିହାସ ବିଷୟରେ ଆଲୋଚନା','ମାନବ ସଭ୍ୟତାର ପତନ ବିଷୟରେ ସୂଚନା'],
+   a:1,
+   exp:'Refers to Passage'},
+
+{q:"'କୃତଜ୍ଞ' ଶବ୍ଦର ପ୍ରକୃତ ବିପରୀତ ଶବ୍ଦଟି ବାଛନ୍ତୁ।",
+ o:["ଅକୃତଜ୍ଞ","କୃତଘ୍ନ","ନିର୍ଦ୍ଦୟ","ପରୋପକାରୀ"],
+ a:1,
+ exp:"‘କୃତଜ୍ଞ’ ମାନେ ଉପକାର ସ୍ମରଣ କରୁଥିବା, ତାହାର ବିପରୀତ ‘କୃତଘ୍ନ’ ଯେଉଁଠାରେ ଉପକାର ଭୁଲିଯାଏ।"},
+
+{q:"ପ୍ରଦତ୍ତ ବାକ୍ୟରେ ବନ୍ଧନୀ ( ) ମଧ୍ୟରେ ଥିବା ଶବ୍ଦ ସ୍ଥାନରେ ସବୁଠାରୁ ଉପଯୁକ୍ତ ବିକଳ୍ପଟି ବ୍ୟବହାର କରନ୍ତୁ:\nଅପରାଧୀଟି ନିଜର ଦୋଷ ସ୍ଵୀକାର କରିବା ପରେ ତାକୁ (କଠିନ) ଦଣ୍ଡବିଧାନ କରାଗଲା।",
+ o:["ଭୟଙ୍କର","ଗୁରୁତର","କଠୋର","ପରିବର୍ତ୍ତନର ଆବଶ୍ୟକତା ନାହିଁ"],
+ a:2,
+ exp:"ଦଣ୍ଡ ସମ୍ବନ୍ଧରେ ‘କଠୋର’ ଶବ୍ଦଟି ଠିକ୍ ବ୍ୟବହାର ହୁଏ।"},
+
+{q:"The newly passed legislation aims to curb the rising inflation and protect the lower-income groups.",
+ o:["ନୂତନ ଭାବେ ପାରିତ ଆଇନର ଲକ୍ଷ୍ୟ ହେଉଛି ବଢ଼ୁଥିବା ମୁଦ୍ରାସ୍ଫୀତିକୁ ନିୟନ୍ତ୍ରଣ କରିବା ଏବଂ ସ୍ଵଳ୍ପ ଆୟକାରୀ ଗୋଷ୍ଠୀକୁ ସୁରକ୍ଷା ପ୍ରଦାନ କରିବା।","ସରକାର ନୂଆ ଆଇନ କରିଛନ୍ତି ଯାହା ଦ୍ଵାରା ଗରିବ ଲୋକଙ୍କୁ ବହୁତ ଲାଭ ମିଳିବ ଏବଂ ଜିନିଷ ପତ୍ର ଦର କମିବ।","ନୂତନ ଆଇନର ମୁଖ୍ୟ ଉଦ୍ଦେଶ୍ୟ ହେଉଛି ଦରଦାମ ବୃଦ୍ଧିକୁ ବନ୍ଦ କରିବା ଏବଂ ସବୁ ଲୋକଙ୍କୁ ଆୟ ଯୋଗାଇବା।","ନୂଆ ନିୟମ ଅନୁସାରେ ଟଙ୍କାର ମୂଲ୍ୟ କମିଯିବ ଏବଂ କମ୍ ପଇସା ପାଉଥିବା ଲୋକମାନେ ଅସୁବିଧାରେ ପଡ଼ିବେ।"],
+ a:0,
+ exp:"ବାକ୍ୟର ଅର୍ଥ ହେଉଛି ମୁଦ୍ରାସ୍ଫୀତିକୁ ନିୟନ୍ତ୍ରଣ କରିବା ଓ ନିମ୍ନ ଆୟ ବର୍ଗକୁ ସୁରକ୍ଷା ଦେବା।"},
+
+{q:"“ଧର୍ମ” ଶବ୍ଦରୁ ସୃଷ୍ଟି ହୋଇଥିବା ପ୍ରକୃତ ତଦ୍ଭବ ଶବ୍ଦଟି କେଉଁଟି ଅଟେ?",
+ o:["ଧରମ","ଧାର୍ମିକ","କର୍ମ","ଧରା"],
+ a:0,
+ exp:"‘ଧର୍ମ’ର ଚଳିତ ରୂପ ‘ଧରମ’ ଯାହା ତଦ୍ଭବ ଶବ୍ଦ।"},
+
+{q:"Choose the most appropriate English translation for the given Odia sentence:\nପ୍ରାକୃତିକ ସମ୍ପଦର ଅବିବେକୀ ବ୍ୟବହାର ଭବିଷ୍ୟତ ପିଢ଼ି ପାଇଁ ଘୋର ସଙ୍କଟ ସୃଷ୍ଟି କରିବ।",
+ o:["Indiscriminate use of natural resources will create a severe crisis for future generations.","Continuous use of nature will make problems for children in future.","Natural resources are being wasted which is very bad for our future.","If we do not save natural assets, we will face many troubles."],
+ a:0,
+ exp:"‘ଅବିବେକୀ ବ୍ୟବହାର’ ଅର୍ଥ indiscriminate use, ସେଥିପାଇଁ ପ୍ରଥମ ବିକଳ୍ପ ସଠିକ୍।"},
+
+{q:"ନିମ୍ନଲିଖିତ ବାକ୍ୟରୁ 'କ୍ରିୟା ବିଶେଷଣ' ପଦଟିକୁ ଚିହ୍ନଟ କରନ୍ତୁ।\nବାକ୍ୟ: ଦଳଗତ ନିଷ୍ପତ୍ତିକୁ ସମ୍ମାନ ଜଣାଇ ସେ ସଭାରେ ଅତି ସଂକ୍ଷେପରେ ନିଜର ବକ୍ତବ୍ୟ ରଖିଲେ।",
+ o:["ସମ୍ମାନ ଜଣାଇ","ସଂକ୍ଷେପରେ","ବକ୍ତବ୍ୟ","ରଖିଲେ"],
+ a:1,
+ exp:"‘ସଂକ୍ଷେପରେ’ କ୍ରିୟା କେମିତି କରାଗଲା ବୁଝାଏ, ତେଣୁ ଏହା କ୍ରିୟା ବିଶେଷଣ।"},
+
+{q:"'ସଂକୀର୍ଣ୍ଣ' ଶବ୍ଦର ସଠିକ୍ ବିପରୀତାର୍ଥବୋଧକ ଶବ୍ଦଟି ଚୟନ କରନ୍ତୁ।",
+ o:["ପ୍ରଶସ୍ତ","ବିସ୍ତୃତ","ଉଦାର","ବିଶାଳ"],
+ a:0,
+ exp:"‘ସଂକୀର୍ଣ୍ଣ’ ମାନେ ସଂକୁଚିତ, ତାହାର ବିପରୀତ ‘ପ୍ରଶସ୍ତ’।"},
+
+{q:"ଉପଯୁକ୍ତ ବିକଳ୍ପ ସାହାଯ୍ୟରେ ଶୂନ୍ୟସ୍ଥାନ ପୂରଣ କରନ୍ତୁ:\nଯେଉଁମାନେ ସମାଜର ମୁଖ୍ୟ ସ୍ରୋତରୁ ବିଚ୍ଛିନ୍ନ ହୋଇ ରହିଛନ୍ତି, ସେମାନଙ୍କର ସର୍ବାଙ୍ଗୀନ ଉନ୍ନତି ପାଇଁ ସରକାର ଅନେକ ________ ଯୋଜନା ପ୍ରଣୟନ କରିଛନ୍ତି।",
+ o:["ପ୍ରତିକୂଳ","କଲ୍ୟାଣମୂଳକ","ସଂକୀର୍ଣ୍ଣ","ରକ୍ଷଣଶୀଳ"],
+ a:1,
+ exp:"ସରକାର ଉନ୍ନତି ପାଇଁ ‘କଲ୍ୟାଣମୂଳକ’ ଯୋଜନା କରିଥାନ୍ତି।"},
+
+{q:"ଉଠାବସା କରିବା - ଏହି ପ୍ରଚଳିତ ରୂଢ଼ିର ପ୍ରକୃତ ଅର୍ଥ କ’ଣ?",
+ o:["ବ୍ୟାୟାମ କରିବା","କାହା ନିୟନ୍ତ୍ରଣରେ ବା ବଶରେ ରହିବା","ଅସ୍ଥିର ହୋଇପଡ଼ିବା","କାହା ସହ ଯୁକ୍ତିତର୍କ କରିବା"],
+ a:1,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ କାହାର ନିୟନ୍ତ୍ରଣରେ ରହିବା।"},
+
+{q:"ବନାନ ଗତ ଶୁଦ୍ଧତା ଦୃଷ୍ଟିରୁ ନିମ୍ନକ୍ତ କେଉଁ ବିକଳ୍ପଟି ସମ୍ପୂର୍ଣ୍ଣ ସଠିକ୍ ଅଟେ?",
+ o:["ଉପରୋକ୍ତ ବ୍ୟକ୍ତି ଜଣକ ବହୁତ ସୌଜନ୍ୟତା ପ୍ରଦର୍ଶନ କଲେ।","ଉପଯୁକ୍ତ ବ୍ୟକ୍ତି ଜଣକ ବହୁତ ସୌଜନ୍ୟ ପ୍ରଦର୍ଶନ କଲେ।","ଉପରିଉକ୍ତ ବ୍ୟକ୍ତି ଜଣକ ବହୁତ ସୌଜନ୍ୟତା ପ୍ରଦର୍ଶନ କଲେ।","ଉପରୋକ୍ତ ବ୍ୟକ୍ତି ଜଣକ ବହୁତ ସୌଜନ୍ୟ ପ୍ରଦର୍ଶନ କଲେ।"],
+ a:1,
+ exp:"‘ଉପଯୁକ୍ତ’ ଓ ‘ସୌଜନ୍ୟ’ ଠିକ୍ ବନାନ ସହିତ ବ୍ୟବହୃତ ହୋଇଛି।"},
+
+{q:"ଏକ ପଦରେ ସଂକ୍ଷେପଣ କରନ୍ତୁ: 'ଯେଉଁ ସ୍ତ୍ରୀର ସ୍ଵାମୀ ଓ ପୁତ୍ର କେହି ନାହାନ୍ତି' -",
+ o:["ଅବିରା","ବିଧବା","ଅନାଥା","ନିରାଶ୍ରୟା"],
+ a:0,
+ exp:"‘ଅବିରା’ ମାନେ ଯେଉଁ ନାରୀର ସ୍ୱାମୀ ଓ ପୁତ୍ର ନାହିଁ।"},
+
+{q:"ଉଚ୍ଚେଇ ଶୁଣିବା - ଏହି ରୂଢ଼ି ପ୍ରୟୋଗର ସଠିକ୍ ଅର୍ଥଟି ଚୟନ କରନ୍ତୁ।",
+ o:["ଭଲ କଥା ଶୁଣିବା","କାନକୁ କମ୍ ଶୁଣାଯିବା","ସମସ୍ତଙ୍କ କଥାକୁ ଗୁରୁତ୍ୱ ଦେବା","ଗର୍ବ ଅହଂକାରରେ କଥା କହିବା"],
+ a:1,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ହେଉଛି କାନ କମ୍ ଶୁଣିବା।"},
+
+{q:"Choose the correct English translation:\nଯେପର୍ଯ୍ୟନ୍ତ ବିଦ୍ୟୁତ୍ ସେବା ସ୍ଵାଭାବିକ ହୋଇନାହିଁ, ସେପର୍ଯ୍ୟନ୍ତ କମ୍ପ୍ୟୁଟର ଚାଲିପାରିବ ନାହିଁ।",
+ o:["Computer will not work until the power supply becomes normal.","Power supply is not good so computer is off.","Unless power is there, you cannot open computer.","Electricity is necessary for running the computer properly."],
+ a:0,
+ exp:"‘ଯେପର୍ଯ୍ୟନ୍ତ…ସେପର୍ଯ୍ୟନ୍ତ’ ର ଅର୍ଥ ‘until’, ସେଥିପାଇଁ ପ୍ରଥମ ବିକଳ୍ପ ସଠିକ୍।"},
+
+{q:"ସାମ୍ପ୍ରତିକ ପରିସ୍ଥିତିରେ\nP. ସୂଚନା ପ୍ରଯୁକ୍ତିବିଦ୍ୟାର ବ୍ୟାପକ ପ୍ରସାର\nQ. କେବଳ ଯୁବପିଢ଼ି ନୁହେଁ ବରଂ\nR. ସମଗ୍ର ମାନବ ସମାଜର ଜୀବନଶୈଳୀକୁ\nS. ସମ୍ପୂର୍ଣ୍ଣ ଭାବେ ବଦଳାଇ ଦେଇଛି",
+ o:["PQRS","QRPS","PRQS","RPSQ"],
+ a:0,
+ exp:"ସଠିକ୍ ବ୍ୟବସ୍ଥା ‘PQRS’ ଯାହାରେ ବାକ୍ୟ ଅର୍ଥପୂର୍ଣ୍ଣ ହୁଏ।"},
+
+{q:"The committee suggested that strict legal action should be taken against those found guilty of corrupt practices.",
+ o:["କମିଟି ପ୍ରସ୍ତାବ ଦେଇଛି ଯେ ଦୁର୍ନୀତିରେ ଲିପ୍ତ ଥିବା ଦୋଷୀମାନଙ୍କ ବିରୋଧରେ କଠୋର ଆଇନଗତ କାର୍ଯ୍ୟାନୁଷ୍ଠାନ ଗ୍ରହଣ କରାଯିବା ଉଚିତ।","କମିଟି କହିଲା ଯେ ଯେଉଁମାନେ ଚୋରି କରୁଛନ୍ତି ସେମାନଙ୍କୁ ପୋଲିସରେ ଦେବା ଦରକାର।","ଦୁର୍ନୀତି କରୁଥିବା ଲୋକଙ୍କୁ କମିଟି କ୍ଷମା କରିଦେବା ପାଇଁ ନିଷ୍ପତ୍ତି ନେଇଛି।","କଡ଼ା ନିୟମ ନ ମାନିଲେ ସମସ୍ତଙ୍କ ବିରୋଧରେ କାର୍ଯ୍ୟାନୁଷ୍ଠାନ ହେବ ବୋଲି କମିଟି କହିଛି।"],
+ a:0,
+ exp:"ବାକ୍ୟର ଅର୍ଥ ହେଉଛି ଦୁର୍ନୀତି କରୁଥିବା ଲୋକଙ୍କ ବିରୋଧରେ କଠୋର ଆଇନଗତ କାର୍ଯ୍ୟାନୁଷ୍ଠାନ ନେବା।"}
+
+
+
+    
+
+
+
+
+    
+];
+/* ===== End questions with explanations ===== */
+
+let answers={}, index=0, timeLeft, timerInt;
+
+window.onload = () => {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(saved){
+    if(saved.answers) answers = saved.answers; // restore previous answers
+    showScore(saved);
+  } else {
+    loader.classList.add("hidden");
+    instruction.classList.remove("hidden");
+  }
+};
+
+function startTest(){
+  instruction.classList.add("hidden");
+  test.classList.remove("hidden");
+  timeLeft=TEST_DURATION_MINUTES*60;
+  timerInt=setInterval(runTimer,1000);
+  buildGrid();loadQ();
+}
+
+function runTimer(){
+  if(timeLeft<=0){submitTest();return;}
+  timeLeft--;
+  timer.innerText=`${String(Math.floor(timeLeft/60)).padStart(2,"0")}:${String(timeLeft%60).padStart(2,"0")}`;
+}
+
+function loadQ(){
+  const q = questions[index];
+  question.innerHTML = (index + 1) + ". " + q.q;
+
+  /* ===== IMAGE LOGIC ===== */
+  imgWrap.classList.add("hidden");
+  qImg.style.display = "none";
+  imgLoader.style.display = "block";
+
+  if(q.img){
+    imgWrap.classList.remove("hidden");
+    qImg.src = q.img;
+
+    qImg.onload = () => {
+      imgLoader.style.display = "none";
+      qImg.style.display = "block";
+    };
+
+    qImg.onerror = () => {
+      imgWrap.classList.add("hidden");
+    };
+  }
+
+  options.innerHTML="";
+  q.o.forEach((t,i)=>{
+    const d=document.createElement("div");
+    d.className="option"+(answers[index]===i?" selected":"");
+    d.innerText=t;
+    d.onclick=()=>{
+      answers[index]=answers[index]===i?null:i;
+
+      /* ===== Save answers to localStorage ===== */
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      saved.answers = answers;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      /* ===== End save ===== */
+
+      loadQ();
+      updateGrid();
+    };
+    options.appendChild(d);
+  });
+
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === questions.length - 1;
+}
+
+function nextQ(){index++;loadQ();}
+function prevQ(){index--;loadQ();}
+
+function buildGrid(){
+  grid.innerHTML="";
+  questions.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.innerText=i+1;
+    d.onclick=()=>{index=i;loadQ();};
+    grid.appendChild(d);
+  });
+}
+
+function updateGrid(){
+  [...grid.children].forEach((d,i)=>d.classList.toggle("attempted",answers[i]!=null));
+}
+
+function submitTest(){
+  clearInterval(timerInt);
+  test.classList.add("hidden");
+  loader.classList.remove("hidden");
+  loader.querySelector("p").innerText="Saving score & calculating rank…";
+
+  let correct=0,wrong=0;
+  questions.forEach((q,i)=>{
+    if(answers[i]==null)return;
+    answers[i]===q.a?correct++:wrong++;
+  });
+
+  const score=+(correct-wrong*NEGATIVE_MARK).toFixed(2);
+
+  const baseData={
+    phone:user.phone,
+    name:user.name,
+    score,correct,wrong,
+    unattempted:questions.length-correct-wrong,
+    updatedAt:Date.now()
+  };
+
+  db.collection("tests").doc(TEST_ID).collection("results").doc(user.phone)
+  .set(baseData,{merge:true})
+  .then(()=>calculateRank(baseData));
+}
+
+function calculateRank(myData){
+  db.collection("tests").doc(TEST_ID).collection("results").get()
+  .then(snap=>{
+    const arr=snap.docs.map(d=>({...d.data(),id:d.id}));
+    arr.sort((a,b)=>b.score-a.score);
+    const rank=arr.findIndex(x=>x.id===user.phone)+1;
+    myData.rankText=`${rank} / ${arr.length}`;
+    myData.answers=answers;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(myData));
+    showScore(myData);
+  });
+}
+
+function showScore(r){
+  loader.classList.add("hidden");
+  score.classList.remove("hidden");
+  userScore.innerText=`Hi ${r.name}, your score is ${r.score}`;
+  stats.innerHTML=`Correct: ${r.correct}<br>Wrong: ${r.wrong}<br>Unattempted: ${r.unattempted}<br><b>Rank: ${r.rankText}</b>`;
+  filterQ("all",document.querySelector(".filter button"));
+}
+
+function filterQ(type,btn){
+  document.querySelectorAll(".filter button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  review.innerHTML="";
+  questions.forEach((q,i)=>{
+    const a=answers[i];
+    if(type==="correct"&&a!==q.a)return;
+    if(type==="wrong"&&(a==null||a===q.a))return;
+    if(type==="unattempted"&&a!=null)return;
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <b>${q.q}</b><br>
+      Your: ${a!=null?q.o[a]:"—"}<br>
+      Correct: ${q.o[q.a]}<br>
+      <details>
+        <summary>Show Explanation</summary>
+        <p>${q.exp || "No explanation provided."}</p>
+      </details>
+    `;
+    review.appendChild(c);
+  });
+}
+
+function reattempt(){popup.style.display="flex";}
+function confirmReattempt(){localStorage.removeItem(STORAGE_KEY);location.reload();}
+</script>
+</body>
+</html>
