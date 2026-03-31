@@ -16,8 +16,8 @@ async function generateExamCards() {
                 card.className = 'card';
                 card.innerHTML = `
                     <h4>OSSSC RI & ARI ODIA SECTIONAL MOCKTEST - ${count}</h4>
-                    <p>TOTAL QUESTIONS - 20</p>
-                    <p>TOTAL TIME - 20 Min</p>
+                    <p>TOTAL QUESTIONS - 15</p>
+                    <p>TOTAL TIME - 15 Min</p>
                     <a href="${fileName}">Start Exam</a>
                 `;
                 container.appendChild(card);
