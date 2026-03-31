@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EduMocker Test</title>
+<title>Odia Abhyas</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -47,9 +47,10 @@
 </div>
 
 <div id="instruction" class="hidden container">
-  <h3>DI Sectional Mocktests Set - 6</h3>
+  <h3>OSSSC RI Odia Sectional - 1</h3>
   <ul>
-    <li>Time: 25 Minutes</li>
+    <li>Time: 20 Minutes</li>
+    <li>Total Questions: 20 </li>
     <li>Negative Marking: 0.25 per wrong answer</li>
     <li>Submit anytime</li>
   </ul>
@@ -59,8 +60,8 @@
 <div id="test" class="hidden">
   <div class="header">
     <b></b>
-      <div class="q-inst">DI Sectional Mocktests Set - 6</div>
-    <span id="timer">25:00</span>
+      <div class="q-inst">OSSSC RI Odia Sectional - 1</div>
+    <span id="timer">20:00</span>
   </div>
   <div class="container">
     
@@ -85,7 +86,7 @@
 </div>
 
 <div id="score" class="hidden score">
-  <h3>DI Sectional SET 6</h3>
+  <h3> OSSSC RI Odia Sectional - 1</h3>
   <p id="userScore"></p>
   <div class="card" id="stats"></div>
 
@@ -116,9 +117,9 @@ apiKey: "AIzaSyAm8LD9iSm24vG2rc_bBSjXuATXxs7-lbE",
 });
 const db = firebase.firestore();
 
-const TEST_ID = "Di-set--6";
+const TEST_ID = "OSSSC RI Odia Sectional - 1";
 const STORAGE_KEY = "RESULT_" + TEST_ID;
-const TEST_DURATION_MINUTES = 25;
+const TEST_DURATION_MINUTES = 20;
 const NEGATIVE_MARK = 0.25;
 
 const user = {
@@ -130,128 +131,106 @@ if(!user.phone){ alert("Login required"); throw ""; }
 /* ===== Added explanations to questions ===== */
 const questions = [
 
+{q:"'ଉତ୍କର୍ଷ' ଶବ୍ଦର ସଠିକ୍ ବିପରୀତ ଶବ୍ଦଟି ବାଛନ୍ତୁ।",
+ o:["ଅପକର୍ଷ","ଅପକର୍ଷତା","ନିଷ୍କର୍ଷ","ଆକର୍ଷ"],
+ a:0,
+ exp:"‘ଉତ୍କର୍ଷ’ର ଅର୍ଥ ଉନ୍ନତି, ତେଣୁ ତାହାର ବିପରୀତ ‘ଅପକର୍ଷ’ ଅର୍ଥାତ୍ ଅବନତି।"},
 
-  
-{q:"The lengths of the sides of a triangle are 6 cm, 8 cm, and 10 cm. What is the area of the triangle?",
-   o:["24 cm²","30 cm²","40 cm²","48 cm²"],
+{q:"The investigation is still underway.",
+ o:["ତଦନ୍ତ ଏବେ ଶେଷ ହୋଇଛି।","ତଦନ୍ତ ଏବେ ମଧ୍ୟ ଜାରି ରହିଛି","ତଦନ୍ତ ବହୁ ଆଗରୁ ସରିଛି।","ତଦନ୍ତ କରିବାକୁ ହେବ।"],
+ a:1,
+ exp:"‘still underway’ର ଅର୍ଥ ହେଉଛି ଏଯାଏ ଚାଲିଛି, ସେଥିପାଇଁ ‘ଜାରି ରହିଛି’ ସଠିକ୍।"},
+
+{q:"ନୟନ ର ତଦ୍ଭବ ଶବ୍ଦ କେଉଁଟି?",
+ o:["ଆଖି","ଚକ୍ଷୁ","ଲୋଚନ","ନେତ୍ର"],
+ a:0,
+ exp:"‘ନୟନ’ର ସାଧାରଣ ଚଳିତ ଶବ୍ଦ ‘ଆଖି’ ଯାହା ତଦ୍ଭବ।"},
+
+{q:"Choose the correct English translation:\nବୃକ୍ଷରୋପଣ ଦ୍ଵାରା ଜଳବାୟୁ ପରିବର୍ତ୍ତନକୁ ରୋକାଯାଇପାରିବ।",
+ o:["Planting trees can stop climate change.","Plantation increases climate change.","Trees are important for climate change.","Climate change stops because of trees."],
+ a:0,
+ exp:"ବାକ୍ୟର ଅର୍ଥ ହେଉଛି ଗଛ ଲଗାଇବା ଦ୍ଵାରା ପରିବର୍ତ୍ତନକୁ ରୋକାଯାଇପାରେ।"},
+
+{q:"କେଉଁ ଶବ୍ଦଟିର ବନାନ ସଠିକ୍ ଅଟେ?",
+ o:["ଶାରୀରିକ","ଶାରିରୀକ","ସାରୀରିକ","ସାରିରୀକ"],
+ a:0,
+ exp:"ଠିକ୍ ବନାନ ‘ଶାରୀରିକ’ ଯାହା ଶରୀର ସହିତ ସମ୍ବନ୍ଧିତ।"},
+
+{q:"ଦିଆଯାଇଥିବା ଇଂରାଜୀ ବାକ୍ୟକୁ ଓଡ଼ିଆରେ ଅନୁବାଦ କରନ୍ତୁ:\nIt has been raining since morning.",
+ o:["ସକାଳୁ ବର୍ଷା ହେବ।","ସକାଳୁ ବର୍ଷା ହେଉଥିଲା।","ସକାଳୁ ବର୍ଷା ହେଉଛି।","ସକାଳେ ବର୍ଷା ହୋଇଥିଲା।"],
+ a:2,
+ exp:"‘has been raining’ ର continuous tense ଅର୍ଥ ‘ହେଉଛି’ ଯାହା ସଠିକ୍।"},
+
+{q:"ଏକ ପଦରେ ପ୍ରକାଶ କରନ୍ତୁ: 'ଯାହା ପୂର୍ବରୁ ଶୁଣାଯାଇ ନାହିଁ' -",
+ o:["ଅଶ୍ରୁତପୂର୍ବ","ଅଶୃତପୂର୍ବ","ଅଶ୍ରୁତପୂର୍ବଃ","ଅଦୃଷ୍ଟପୂର୍ବ"],
+ a:0,
+ exp:"‘ଅଶ୍ରୁତପୂର୍ବ’ ମାନେ ଯାହା ପୂର୍ବରୁ କେବେ ଶୁଣାଯାଇନି।"},
+
+{q:"( ) ଚିହ୍ନିତ ସ୍ଥାନ ପାଇଁ ସଠିକ୍ ବିକଳ୍ପ ବାଛନ୍ତୁ:\nକାଲି (ଅଳପ) ବର୍ଷା ଯୋଗୁଁ ଚାଷ କାମ ବାଧାପ୍ରାପ୍ତ ହୋଇଛି।",
+ o:["ପ୍ରବଳ","ସାମାନ୍ୟ","ଧିମା","ପରିବର୍ତ୍ତନ ଆବଶ୍ୟକ ନାହିଁ"],
+ a:0,
+ exp:"ଏଠାରେ ବାଧା ପାଇଁ ବର୍ଷା ବେଶି ଥିଲା, ସେଥିପାଇଁ ‘ପ୍ରବଳ’ ଠିକ୍।"},
+
+{q:"'ଅନୁରକ୍ତ' ଶବ୍ଦର ବିପରୀତ ଶବ୍ଦ ଚୟନ କରନ୍ତୁ।",
+ o:["ବିରକ୍ତ","ବିମୁଖ","ପ୍ରତିରକ୍ତ","ବିରକ୍ତ"],
+ a:0,
+ exp:"‘ଅନୁରକ୍ତ’ ଅର୍ଥ ଆସକ୍ତ, ତାହାର ବିପରୀତ ‘ବିରକ୍ତ’।"},
+
+{q:"ଅଧ୍ୟବସାୟୀ ବ୍ୟକ୍ତି ହିଁ ଜୀବନରେ ସଫଳତା ________।",
+ o:["ପାଉଥିଲେ","ଲାଭ କରନ୍ତି","ହୋଇଥାଏ","କରିଯାଆନ୍ତି"],
+ a:1,
+ exp:"ଠିକ୍ ବାକ୍ୟ ହେଉଛି ‘ସଫଳତା ଲାଭ କରନ୍ତି’।"},
+
+{q:"ବାକ୍ୟ: ପବନ ଧୀରେ ଧୀରେ ବହୁଛି। କ୍ରିୟା ବିଶେଷଣ ଚିହ୍ନଟ କରନ୍ତୁ।",
+ o:["ପବନ","ବହୁଛି","ଧୀରେ ଧୀରେ","କେଉଁଟି ବି ନୁହେଁ"],
+ a:2,
+ exp:"‘ଧୀରେ ଧୀରେ’ କ୍ରିୟା କେମିତି ଘଟୁଛି ବୁଝାଏ, ତେଣୁ ଏହା କ୍ରିୟା ବିଶେଷଣ।"},
+
+{q:"'କପାଳ ଫାଟିବା' ରୂଢ଼ିର ଅର୍ଥ କ’ଣ?",
+ o:["ମୁଣ୍ଡ ଫାଟିବା","ସର୍ବନାଶ ହେବା","କପାଳରେ ଲେଖା ହେବା","ଭାଗ୍ୟ ଉଦୟ ହେବା"],
+ a:1,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ଦୁର୍ଦ୍ଦଶା କିମ୍ବା ସର୍ବନାଶ ହେବା।"},
+
+{q:"ପ୍ରଯୁକ୍ତିବିଦ୍ୟା\nP. ଉପଯୋଗ କରି\nQ. କ୍ଷେତ୍ରରେ ବିପ୍ଳବ\nR. ଶିକ୍ଷା ଓ ସ୍ଵାସ୍ଥ୍ୟ\nS. ଆଣିବା ସମ୍ଭବ ହୋଇଛି",
+ o:["PRQS","RPQS","PQRS","RQPS"],
+ a:3,
+ exp:"ସଠିକ୍ ବ୍ୟବସ୍ଥା ‘RQPS’ ଯାହାରେ ବାକ୍ୟ ଅର୍ଥପୂର୍ଣ୍ଣ ହୁଏ।"},
+
+{q:"ଅକାଳ କୁଷ୍ମାଣ୍ଡ ରୂଢ଼ିର ପ୍ରକୃତ ଅର୍ଥ କ’ଣ?",
+ o:["ଅଦିନିଆ କଖାରୁ","ଅଯୋଗ୍ୟ ବ୍ୟକ୍ତି","ବହୁତ ଜ୍ଞାନୀ","ସମୟ ପୂର୍ବରୁ ବଡ଼ ହେବା"],
+ a:1,
+ exp:"ଏହି ରୂଢ଼ିର ଅର୍ଥ ଅଯୋଗ୍ୟ କିମ୍ବା ଅକାମ୍ୟ ବ୍ୟକ୍ତି।"},
+
+{q:"Choose the correct English translation:\nଛାତ୍ରମାନେ ଶୃଙ୍ଖଳିତ ହେବା ଉଚିତ।",
+ o:["Students are disciplined.","Students must be disciplined.","Students should be disciplined.","Students can be disciplined."],
+ a:2,
+ exp:"‘ଉଚିତ’ ଅର୍ଥ ‘should’, ତେଣୁ ସଠିକ୍ ଅନୁବାଦ ‘should be disciplined’।"},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଗଣତାନ୍ତ୍ରିକ ବ୍ୟବସ୍ଥାରେ ନିର୍ବାଚନ ହେଉଛି ଜନମତର ପ୍ରତିଫଳନ ଏବଂ ଓଡ଼ିଶା ଭଳି ଏକ ରାଜ୍ୟରେ ଏହାର ଗୁରୁତ୍ୱ ଅତି ବ୍ୟାପକ। ଓଡ଼ିଶାର ରାଜନୈତିକ ଇତିହାସକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ଏଠାରେ ଭୋଟରମାନେ ସ୍ଥିରତା ଏବଂ ପ୍ରଗତିଶୀଳ ନେତୃତ୍ୱକୁ ସର୍ବଦା ପ୍ରାଧାନ୍ୟ ଦେଇଛନ୍ତି। ନିର୍ବାଚନ କେବଳ ପ୍ରତିନିଧି ଚୟନର ଏକ ମାଧ୍ୟମ ନୁହେଁ, ବରଂ ଏହା ରାଜ୍ୟର ଆର୍ଥସାମାଜିକ ରୂପରେଖ ନିର୍ଦ୍ଧାରଣ କରିବାର ଏକ ଶକ୍ତିଶାଳୀ ଆୟୁଧ। ଓଡ଼ିଶାରେ ନିର୍ବାଚନ ସମୟରେ ବିଭିନ୍ନ ଆଞ୍ଚଳିକ ଏବଂ ଜାତୀୟ ଦଳଗୁଡ଼ିକ ମଧ୍ୟରେ ଚାଲିଥିବା ପ୍ରତିଦ୍ୱନ୍ଦ୍ୱିତା ଗଣତନ୍ତ୍ରକୁ ଅଧିକ ସୁଦୃଢ଼ କରିଥାଏ। ବିଶେଷ କରି ମହିଳା ଭୋଟରଙ୍କ ସକ୍ରିୟ ଅଂଶଗ୍ରହଣ ଏବଂ ସ୍ୱୟଂ ସହାୟକ ଗୋଷ୍ଠୀଗୁଡ଼ିକର ପ୍ରଭାବ ଓଡ଼ିଶା ନିର୍ବାଚନକୁ ଏକ ନୂତନ ମୋଡ଼ ଦେଇଛି। <br><br>ତେବେ ନିର୍ବାଚନ ପ୍ରକ୍ରିୟାରେ ସ୍ୱଚ୍ଛତା ଏବଂ ନିରପେକ୍ଷତା ବଜାୟ ରଖିବା ପ୍ରଶାସନ ପାଇଁ ଏକ ବଡ଼ ଆହ୍ୱାନ। ଅର୍ଥବଳ ଓ ବାହୁବଳର ପ୍ରଭାବକୁ ରୋକିବା ସହ ଶାନ୍ତିପୂର୍ଣ୍ଣ ଭାବେ ମତଦାନ ସାବ୍ୟସ୍ତ କରିବା ଉପରେ ନିର୍ବାଚନ କମିଶନ ଗୁରୁତ୍ୱାରୋପ କରନ୍ତି। ଗ୍ରାମାଞ୍ଚଳର ଶିକ୍ଷିତ ଯୁବପିଢ଼ି ଏବେ ନିର୍ବାଚନୀ ଇସ୍ତାହାର ଏବଂ ବିକାଶମୂଳକ କାର୍ଯ୍ୟର ମୂଲ୍ୟାଙ୍କନ କରି ଭୋଟ ଦେବାକୁ ଆଗ୍ରହ ପ୍ରକାଶ କରୁଛନ୍ତି, ଯାହା ଏକ ସୁସ୍ଥ ଗଣତନ୍ତ୍ରର ସୂଚକ। ଓଡ଼ିଶାରେ ସ୍ଥାନୀୟ ସମସ୍ୟା ଯଥା କୃଷି, ଶିଳ୍ପାୟନ ଏବଂ ନିଯୁକ୍ତି ନିର୍ବାଚନର ମୁଖ୍ୟ ପ୍ରସଙ୍ଗ ପାଲଟିଥାଏ। ରାଜନୈତିକ ଦଳଗୁଡ଼ିକ ନିଜର ପ୍ରଚାର ମାଧ୍ୟମରେ ଜନସାଧାରଣଙ୍କ ନିକଟତର ହେବାକୁ ଚେଷ୍ଟା କରୁଥିବା ବେଳେ, ଶେଷ ନିଷ୍ପତ୍ତି କେବଳ ଜନତା ଜନାର୍ଦ୍ଦନଙ୍କ ହାତରେ ହିଁ ଥାଏ।</span><br><br> ଅନୁଚ୍ଛେଦ ଅନୁଯାୟୀ, ଓଡ଼ିଶା ନିର୍ବାଚନରେ କେଉଁ ବିଷୟଟି ଏକ ନୂତନ ପରିବର୍ତ୍ତନ ଆଣିଛି?",
+   o:['କେବଳ ପୁରୁଷ ଭୋଟରଙ୍କ ସଂଖ୍ୟା ବୃଦ୍ଧି','ମହିଳା ଭୋଟରଙ୍କ ସକ୍ରିୟତା ଏବଂ ସ୍ୱୟଂ ସହାୟକ ଗୋଷ୍ଠୀର ପ୍ରଭାବ','ଶିଳ୍ପପତିମାନଙ୍କର ପ୍ରତ୍ୟକ୍ଷ ସହଯୋଗ','ବିଦେଶୀ ପୁଞ୍ଜି ନିବେଶର ପ୍ରଭାବ'],
+   a:1,
+   exp:'Refers to Passage'},
+
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଗଣତାନ୍ତ୍ରିକ ବ୍ୟବସ୍ଥାରେ ନିର୍ବାଚନ ହେଉଛି ଜନମତର ପ୍ରତିଫଳନ ଏବଂ ଓଡ଼ିଶା ଭଳି ଏକ ରାଜ୍ୟରେ ଏହାର ଗୁରୁତ୍ୱ ଅତି ବ୍ୟାପକ। ଓଡ଼ିଶାର ରାଜନୈତିକ ଇତିହାସକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ଏଠାରେ ଭୋଟରମାନେ ସ୍ଥିରତା ଏବଂ ପ୍ରଗତିଶୀଳ ନେତୃତ୍ୱକୁ ସର୍ବଦା ପ୍ରାଧାନ୍ୟ ଦେଇଛନ୍ତି। ନିର୍ବାଚନ କେବଳ ପ୍ରତିନିଧି ଚୟନର ଏକ ମାଧ୍ୟମ ନୁହେଁ, ବରଂ ଏହା ରାଜ୍ୟର ଆର୍ଥସାମାଜିକ ରୂପରେଖ ନିର୍ଦ୍ଧାରଣ କରିବାର ଏକ ଶକ୍ତିଶାଳୀ ଆୟୁଧ। ଓଡ଼ିଶାରେ ନିର୍ବାଚନ ସମୟରେ ବିଭିନ୍ନ ଆଞ୍ଚଳିକ ଏବଂ ଜାତୀୟ ଦଳଗୁଡ଼ିକ ମଧ୍ୟରେ ଚାଲିଥିବା ପ୍ରତିଦ୍ୱନ୍ଦ୍ୱିତା ଗଣତନ୍ତ୍ରକୁ ଅଧିକ ସୁଦୃଢ଼ କରିଥାଏ। ବିଶେଷ କରି ମହିଳା ଭୋଟରଙ୍କ ସକ୍ରିୟ ଅଂଶଗ୍ରହଣ ଏବଂ ସ୍ୱୟଂ ସହାୟକ ଗୋଷ୍ଠୀଗୁଡ଼ିକର ପ୍ରଭାବ ଓଡ଼ିଶା ନିର୍ବାଚନକୁ ଏକ ନୂତନ ମୋଡ଼ ଦେଇଛି। <br><br>ତେବେ ନିର୍ବାଚନ ପ୍ରକ୍ରିୟାରେ ସ୍ୱଚ୍ଛତା ଏବଂ ନିରପେକ୍ଷତା ବଜାୟ ରଖିବା ପ୍ରଶାସନ ପାଇଁ ଏକ ବଡ଼ ଆହ୍ୱାନ। ଅର୍ଥବଳ ଓ ବାହୁବଳର ପ୍ରଭାବକୁ ରୋକିବା ସହ ଶାନ୍ତିପୂର୍ଣ୍ଣ ଭାବେ ମତଦାନ ସାବ୍ୟସ୍ତ କରିବା ଉପରେ ନିର୍ବାଚନ କମିଶନ ଗୁରୁତ୍ୱାରୋପ କରନ୍ତି। ଗ୍ରାମାଞ୍ଚଳର ଶିକ୍ଷିତ ଯୁବପିଢ଼ି ଏବେ ନିର୍ବାଚନୀ ଇସ୍ତାହାର ଏବଂ ବିକାଶମୂଳକ କାର୍ଯ୍ୟର ମୂଲ୍ୟାଙ୍କନ କରି ଭୋଟ ଦେବାକୁ ଆଗ୍ରହ ପ୍ରକାଶ କରୁଛନ୍ତି, ଯାହା ଏକ ସୁସ୍ଥ ଗଣତନ୍ତ୍ରର ସୂଚକ। ଓଡ଼ିଶାରେ ସ୍ଥାନୀୟ ସମସ୍ୟା ଯଥା କୃଷି, ଶିଳ୍ପାୟନ ଏବଂ ନିଯୁକ୍ତି ନିର୍ବାଚନର ମୁଖ୍ୟ ପ୍ରସଙ୍ଗ ପାଲଟିଥାଏ। ରାଜନୈତିକ ଦଳଗୁଡ଼ିକ ନିଜର ପ୍ରଚାର ମାଧ୍ୟମରେ ଜନସାଧାରଣଙ୍କ ନିକଟତର ହେବାକୁ ଚେଷ୍ଟା କରୁଥିବା ବେଳେ, ଶେଷ ନିଷ୍ପତ୍ତି କେବଳ ଜନତା ଜନାର୍ଦ୍ଦନଙ୍କ ହାତରେ ହିଁ ଥାଏ।</span><br><br> ଏହି ଅନୁଚ୍ଛେଦର ସ୍ୱର କିପରି ଅଟେ?",
+   o:['ବିଶ୍ଳେଷଣାତ୍ମକ ଏବଂ ଗଠନମୂଳକ','କାଳ୍ପନିକ ଏବଂ ହାସ୍ୟରସାତ୍ମକ','ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ବ୍ୟଙ୍ଗାତ୍ମକ','ଦୁଃଖପୂର୍ଣ୍ଣ ଏବଂ ନୈରାଶ୍ୟଜନକ'],
    a:0,
-   exp:"This is a right triangle; Area = (1/2) × base × height = (1/2) × 6 × 8 = 24 cm²."},
+   exp:'Refers to Passage'},
 
-{q:"A sum of money doubles in 5 years at simple interest. What will it amount to in 15 years?",
-   o:["3","4","5","6"],
-   a:1,
-   exp:"If money doubles in 5 years, it earns 100% in 5 years. In 15 years, it will earn 300%, so it will amount to 4 times the initial amount."},
-
-{q:"A number increased by 40% becomes 84. What is the original number?",
-   o:["50","55","60","65"],
-   a:2,
-   exp:"Let x be the original number. Thus, x + 0.4x = 84 ⇒ 1.4x = 84 ⇒ x = 60."},
-
-{q:"If a rectangle has a length of 12 cm and a perimeter of 48 cm, what is its width?",
-   o:["10 cm","12 cm","14 cm","16 cm"],
-   a:1,
-   exp:"Perimeter P = 2(l + w) = 48. So, l + w = 24; hence, 12 + w = 24 → w = 12 cm."},
-
-{q:"The population of a town is 4000. If it increases by 10% each year, what will be the population after 2 years?",
-   o:["4400","4840","5000","5200"],
-   a:1,
-   exp:"Population after 2 years = 4000 × (1 + 0.1)² = 4000 × 1.21 = 4840."},
-
-{q:"If 8 men can complete a work in 12 days, how many men will be required to finish the same work in 9 days?",
-   o:["10","12","16","18"],
-   a:1,
-   exp:"Work done = men × days = 8 × 12 = 96 man-days. To finish in 9 days, required men = 96/9 = 10.67, which rounds to 12."},
-
-{q:"A batsman’s average runs in 9 innings is 60. If he scores 75 runs in his next innings, what will be his new average?",
-   o:["61","62","63","64"],
-   a:2,
-   exp:"Total runs in 9 innings = 60 × 9 = 540. Total runs after 10 innings = 540 + 75 = 615. New average = 615/10 = 61.5."},
-
-{q:"If 25% of a number is 35, what will be 50% of the number?",
-   o:["50","60","70","80"],
-   a:2,
-   exp:"Let the number be x. (25/100)x = 35; thus, x = 35 × 4 = 140. Hence, 50% is 70."},
-
-{q:"A number is increased by 20% and then decreased by 20%. What is the net change in the number?",
-   o:["-4%","0%","4%","8%"],
-   a:2,
-   exp:"Let initial number = 100. After increasing, it becomes 120; after decreasing, it becomes 96. Net change = (96 - 100)/100 * 100 = -4%."},
-
-{q:"There are 15 pens in a box. If 5 pens are red and the rest are blue, what is the probability of drawing a blue pen?",
-   o:["0.5","0.6","0.7","0.8"],
-   a:-1,
-   exp:"There are 10 blue pens. Probability = Number of favorable outcomes / Total outcomes = 10/15 = 2/3 ≈ 0.67."},
-
-{q:"If a car travels 300 km at a speed of 60 km/h, how long does it take to complete the journey?",
-   o:["4 hours","5 hours","6 hours","7 hours"],
-   a:1,
-   exp:"Time = Distance/Speed = 300/60 = 5 hours."},
-
-{q:"A person's salary increases by 20% and then decreases by 10%. If the original salary was $1000, what is the final salary?",
-   o:["1080","1100","1120","1150"],
+{q:"<span style='font-weight: normal;'> ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଗଣତାନ୍ତ୍ରିକ ବ୍ୟବସ୍ଥାରେ ନିର୍ବାଚନ ହେଉଛି ଜନମତର ପ୍ରତିଫଳନ ଏବଂ ଓଡ଼ିଶା ଭଳି ଏକ ରାଜ୍ୟରେ ଏହାର ଗୁରୁତ୍ୱ ଅତି ବ୍ୟାପକ। ଓଡ଼ିଶାର ରାଜନୈତିକ ଇତିହାସକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ଏଠାରେ ଭୋଟରମାନେ ସ୍ଥିରତା ଏବଂ ପ୍ରଗତିଶୀଳ ନେତୃତ୍ୱକୁ ସର୍ବଦା ପ୍ରାଧାନ୍ୟ ଦେଇଛନ୍ତି। ନିର୍ବାଚନ କେବଳ ପ୍ରତିନିଧି ଚୟନର ଏକ ମାଧ୍ୟମ ନୁହେଁ, ବରଂ ଏହା ରାଜ୍ୟର ଆର୍ଥସାମାଜିକ ରୂପରେଖ ନିର୍ଦ୍ଧାରଣ କରିବାର ଏକ ଶକ୍ତିଶାଳୀ ଆୟୁଧ। ଓଡ଼ିଶାରେ ନିର୍ବାଚନ ସମୟରେ ବିଭିନ୍ନ ଆଞ୍ଚଳିକ ଏବଂ ଜାତୀୟ ଦଳଗୁଡ଼ିକ ମଧ୍ୟରେ ଚାଲିଥିବା ପ୍ରତିଦ୍ୱନ୍ଦ୍ୱିତା ଗଣତନ୍ତ୍ରକୁ ଅଧିକ ସୁଦୃଢ଼ କରିଥାଏ। ବିଶେଷ କରି ମହିଳା ଭୋଟରଙ୍କ ସକ୍ରିୟ ଅଂଶଗ୍ରହଣ ଏବଂ ସ୍ୱୟଂ ସହାୟକ ଗୋଷ୍ଠୀଗୁଡ଼ିକର ପ୍ରଭାବ ଓଡ଼ିଶା ନିର୍ବାଚନକୁ ଏକ ନୂତନ ମୋଡ଼ ଦେଇଛି। <br><br>ତେବେ ନିର୍ବାଚନ ପ୍ରକ୍ରିୟାରେ ସ୍ୱଚ୍ଛତା ଏବଂ ନିରପେକ୍ଷତା ବଜାୟ ରଖିବା ପ୍ରଶାସନ ପାଇଁ ଏକ ବଡ଼ ଆହ୍ୱାନ। ଅର୍ଥବଳ ଓ ବାହୁବଳର ପ୍ରଭାବକୁ ରୋକିବା ସହ ଶାନ୍ତିପୂର୍ଣ୍ଣ ଭାବେ ମତଦାନ ସାବ୍ୟସ୍ତ କରିବା ଉପରେ ନିର୍ବାଚନ କମିଶନ ଗୁରୁତ୍ୱାରୋପ କରନ୍ତି। ଗ୍ରାମାଞ୍ଚଳର ଶିକ୍ଷିତ ଯୁବପିଢ଼ି ଏବେ ନିର୍ବାଚନୀ ଇସ୍ତାହାର ଏବଂ ବିକାଶମୂଳକ କାର୍ଯ୍ୟର ମୂଲ୍ୟାଙ୍କନ କରି ଭୋଟ ଦେବାକୁ ଆଗ୍ରହ ପ୍ରକାଶ କରୁଛନ୍ତି, ଯାହା ଏକ ସୁସ୍ଥ ଗଣତନ୍ତ୍ରର ସୂଚକ। ଓଡ଼ିଶାରେ ସ୍ଥାନୀୟ ସମସ୍ୟା ଯଥା କୃଷି, ଶିଳ୍ପାୟନ ଏବଂ ନିଯୁକ୍ତି ନିର୍ବାଚନର ମୁଖ୍ୟ ପ୍ରସଙ୍ଗ ପାଲଟିଥାଏ। ରାଜନୈତିକ ଦଳଗୁଡ଼ିକ ନିଜର ପ୍ରଚାର ମାଧ୍ୟମରେ ଜନସାଧାରଣଙ୍କ ନିକଟତର ହେବାକୁ ଚେଷ୍ଟା କରୁଥିବା ବେଳେ, ଶେଷ ନିଷ୍ପତ୍ତି କେବଳ ଜନତା ଜନାର୍ଦ୍ଦନଙ୍କ ହାତରେ ହିଁ ଥାଏ।</span><br><br> ନିମ୍ନୋକ୍ତ ମଧ୍ୟରୁ କେଉଁଟି ଅନୁଚ୍ଛେଦରେ ଏକ ଆହ୍ୱାନ ଭାବେ ବର୍ଣ୍ଣନା କରାଯାଇଛି?",
+   o:['ଶାନ୍ତିପୂର୍ଣ୍ଣ ଭାବେ ମତଦାନ କରାଇବା ଏବଂ ସ୍ୱଚ୍ଛତା ରକ୍ଷା କରିବା','କୃଷି କ୍ଷେତ୍ରରେ ଅଧିକ ଉତ୍ପାଦନ କରିବା','କେବଳ ସହରାଞ୍ଚଳରେ ନିର୍ବାଚନ ପ୍ରଚାର କରିବା','ନିର୍ବାଚନ ସମୟରେ ଅଧିକ ଛୁଟି ଘୋଷଣା କରିବା'],
    a:0,
-   exp:"After a 20% increase, salary = 1200. After a 10% decrease = 1200 - 120 = 1080."},
+   exp:'Refers to Passage'},
 
-{q:"The ratio of the ages of A and B is 4:5. If A is 12 years older than C, find C's age if B is currently 36 years old.",
-   o:["24","28","30","32"],
-   a:0,
-   exp:"Let B's age = 36 years. Then, A's age = (4/5) * 36 = 28. Therefore, C's age = A's age - 12 = 28 - 12 = 16."},
-
-{q:"If the average of 5 numbers is 18, what will be the sum of the numbers?",
-   o:["78","80","90","100"],
-   a:2,
-   exp:"Average = Sum/Count, therefore sum = Average × Count = 18 × 5 = 90."},
-
-{q:"A shopkeeper makes a profit of 25% on the marked price. If the marked price of a shirt is $80, at what price does the shopkeeper sell it?",
-   o:["$60","$65","$70","$75"],
-   a:3,
-   exp:"Selling Price = Marked Price × (1 + Profit Percentage) = 80 × 1.25 = $100. Profit is 25% of 80 = 20, Sale Price = 100 - 20 = $80."},
-
-{q:"What is the amount after 3 years if $2000 is invested at an annual interest rate of 5% compounded annually?",
-   o:["$2320","$2520","$2640","$2800"],
-   a:0,
-   exp:"Using the formula A = P(1 + r/n)^(nt), A = 2000(1 + 0.05)³ = 2000 × 1.157625 = $2315.25."},
-
-{q:"If the selling price of an article is 20% more than its cost price and the cost price is $50, what is the selling price?",
-   o:["$55","$60","$65","$70"],
+{q:"<span style='font-weight: normal;'>ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଗଣତାନ୍ତ୍ରିକ ବ୍ୟବସ୍ଥାରେ ନିର୍ବାଚନ ହେଉଛି ଜନମତର ପ୍ରତିଫଳନ ଏବଂ ଓଡ଼ିଶା ଭଳି ଏକ ରାଜ୍ୟରେ ଏହାର ଗୁରୁତ୍ୱ ଅତି ବ୍ୟାପକ। ଓଡ଼ିଶାର ରାଜନୈତିକ ଇତିହାସକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ଏଠାରେ ଭୋଟରମାନେ ସ୍ଥିରତା ଏବଂ ପ୍ରଗତିଶୀଳ ନେତୃତ୍ୱକୁ ସର୍ବଦା ପ୍ରାଧାନ୍ୟ ଦେଇଛନ୍ତି। ନିର୍ବାଚନ କେବଳ ପ୍ରତିନିଧି ଚୟନର ଏକ ମାଧ୍ୟମ ନୁହେଁ, ବରଂ ଏହା ରାଜ୍ୟର ଆର୍ଥସାମାଜିକ ରୂପରେଖ ନିର୍ଦ୍ଧାରଣ କରିବାର ଏକ ଶକ୍ତିଶାଳୀ ଆୟୁଧ। ଓଡ଼ିଶାରେ ନିର୍ବାଚନ ସମୟରେ ବିଭିନ୍ନ ଆଞ୍ଚଳିକ ଏବଂ ଜାତୀୟ ଦଳଗୁଡ଼ିକ ମଧ୍ୟରେ ଚାଲିଥିବା ପ୍ରତିଦ୍ୱନ୍ଦ୍ୱିତା ଗଣତନ୍ତ୍ରକୁ ଅଧିକ ସୁଦୃଢ଼ କରିଥାଏ। ବିଶେଷ କରି ମହିଳା ଭୋଟରଙ୍କ ସକ୍ରିୟ ଅଂଶଗ୍ରହଣ ଏବଂ ସ୍ୱୟଂ ସହାୟକ ଗୋଷ୍ଠୀଗୁଡ଼ିକର ପ୍ରଭାବ ଓଡ଼ିଶା ନିର୍ବାଚନକୁ ଏକ ନୂତନ ମୋଡ଼ ଦେଇଛି। <br><br>ତେବେ ନିର୍ବାଚନ ପ୍ରକ୍ରିୟାରେ ସ୍ୱଚ୍ଛତା ଏବଂ ନିରପେକ୍ଷତା ବଜାୟ ରଖିବା ପ୍ରଶାସନ ପାଇଁ ଏକ ବଡ଼ ଆହ୍ୱାନ। ଅର୍ଥବଳ ଓ ବାହୁବଳର ପ୍ରଭାବକୁ ରୋକିବା ସହ ଶାନ୍ତିପୂର୍ଣ୍ଣ ଭାବେ ମତଦାନ ସାବ୍ୟସ୍ତ କରିବା ଉପରେ ନିର୍ବାଚନ କମିଶନ ଗୁରୁତ୍ୱାରୋପ କରନ୍ତି। ଗ୍ରାମାଞ୍ଚଳର ଶିକ୍ଷିତ ଯୁବପିଢ଼ି ଏବେ ନିର୍ବାଚନୀ ଇସ୍ତାହାର ଏବଂ ବିକାଶମୂଳକ କାର୍ଯ୍ୟର ମୂଲ୍ୟାଙ୍କନ କରି ଭୋଟ ଦେବାକୁ ଆଗ୍ରହ ପ୍ରକାଶ କରୁଛନ୍ତି, ଯାହା ଏକ ସୁସ୍ଥ ଗଣତନ୍ତ୍ରର ସୂଚକ। ଓଡ଼ିଶାରେ ସ୍ଥାନୀୟ ସମସ୍ୟା ଯଥା କୃଷି, ଶିଳ୍ପାୟନ ଏବଂ ନିଯୁକ୍ତି ନିର୍ବାଚନର ମୁଖ୍ୟ ପ୍ରସଙ୍ଗ ପାଲଟିଥାଏ। ରାଜନୈତିକ ଦଳଗୁଡ଼ିକ ନିଜର ପ୍ରଚାର ମାଧ୍ୟମରେ ଜନସାଧାରଣଙ୍କ ନିକଟତର ହେବାକୁ ଚେଷ୍ଟା କରୁଥିବା ବେଳେ, ଶେଷ ନିଷ୍ପତ୍ତି କେବଳ ଜନତା ଜନାର୍ଦ୍ଦନଙ୍କ ହାତରେ ହିଁ ଥାଏ।</span><br><br> ଅନୁଚ୍ଛେଦ ଅନୁସାରେ 'ସୁସ୍ଥ ଗଣତନ୍ତ୍ରର ସୂଚକ' କାହାକୁ କୁହାଯାଇଛି?",
+   o:['କୌଣସି ବିଚାର ନକରି ଭୋଟ ଦେବା','ଯୁବପିଢ଼ିଙ୍କ ଦ୍ୱାରା ବିକାଶମୂଳକ କାର୍ଯ୍ୟର ମୂଲ୍ୟାଙ୍କନ କରି ଭୋଟ ଦେବା','ନିର୍ବାଚନ ସମୟରେ ଗାଁକୁ ନଯିବା','କେବଳ ପାରମ୍ପରିକ ରୀତିରେ ନେତା ବାଛିବା'],
    a:1,
-   exp:"Selling Price = Cost Price + 20% of Cost Price = 50 + (20/100)*50 = 50 + 10 = $60."},
+   exp:'Refers to Passage'},
 
-{q:"A train travels 60 km at a uniform speed and 20 km at 30 km/h. What is the average speed of the train for the entire journey?",
-   o:["40 km/h","45 km/h","50 km/h","55 km/h"],
-   a:0,
-   exp:"Total time = (60/30) + (20/30) = 2 + 0.67 = 2.67 hours. Average speed = Total distance/Total time = (60+20)/2.67 = 40 km/h."},
-
-{q:"If an item is bought for $75 and sold for $90, what is the percentage gain?",
-   o:["15%","20%","25%","30%"],
+{q:"<span style='font-weight: normal;'>ନିମ୍ନଲିଖିତ ଅନୁଚ୍ଛେଦକୁ ଧ୍ୟାନର ସହିତ ପଢ଼ନ୍ତୁ ଏବଂ ଦିଆଯାଇଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକର ସଠିକ୍ ଉତ୍ତର ବାଛନ୍ତୁ।<br><br>ଗଣତାନ୍ତ୍ରିକ ବ୍ୟବସ୍ଥାରେ ନିର୍ବାଚନ ହେଉଛି ଜନମତର ପ୍ରତିଫଳନ ଏବଂ ଓଡ଼ିଶା ଭଳି ଏକ ରାଜ୍ୟରେ ଏହାର ଗୁରୁତ୍ୱ ଅତି ବ୍ୟାପକ। ଓଡ଼ିଶାର ରାଜନୈତିକ ଇତିହାସକୁ ଅନୁଧ୍ୟାନ କଲେ ଜଣାଯାଏ ଯେ, ଏଠାରେ ଭୋଟରମାନେ ସ୍ଥିରତା ଏବଂ ପ୍ରଗତିଶୀଳ ନେତୃତ୍ୱକୁ ସର୍ବଦା ପ୍ରାଧାନ୍ୟ ଦେଇଛନ୍ତି। ନିର୍ବାଚନ କେବଳ ପ୍ରତିନିଧି ଚୟନର ଏକ ମାଧ୍ୟମ ନୁହେଁ, ବରଂ ଏହା ରାଜ୍ୟର ଆର୍ଥସାମାଜିକ ରୂପରେଖ ନିର୍ଦ୍ଧାରଣ କରିବାର ଏକ ଶକ୍ତିଶାଳୀ ଆୟୁଧ। ଓଡ଼ିଶାରେ ନିର୍ବାଚନ ସମୟରେ ବିଭିନ୍ନ ଆଞ୍ଚଳିକ ଏବଂ ଜାତୀୟ ଦଳଗୁଡ଼ିକ ମଧ୍ୟରେ ଚାଲିଥିବା ପ୍ରତିଦ୍ୱନ୍ଦ୍ୱିତା ଗଣତନ୍ତ୍ରକୁ ଅଧିକ ସୁଦୃଢ଼ କରିଥାଏ। ବିଶେଷ କରି ମହିଳା ଭୋଟରଙ୍କ ସକ୍ରିୟ ଅଂଶଗ୍ରହଣ ଏବଂ ସ୍ୱୟଂ ସହାୟକ ଗୋଷ୍ଠୀଗୁଡ଼ିକର ପ୍ରଭାବ ଓଡ଼ିଶା ନିର୍ବାଚନକୁ ଏକ ନୂତନ ମୋଡ଼ ଦେଇଛି। <br><br>ତେବେ ନିର୍ବାଚନ ପ୍ରକ୍ରିୟାରେ ସ୍ୱଚ୍ଛତା ଏବଂ ନିରପେକ୍ଷତା ବଜାୟ ରଖିବା ପ୍ରଶାସନ ପାଇଁ ଏକ ବଡ଼ ଆହ୍ୱାନ। ଅର୍ଥବଳ ଓ ବାହୁବଳର ପ୍ରଭାବକୁ ରୋକିବା ସହ ଶାନ୍ତିପୂର୍ଣ୍ଣ ଭାବେ ମତଦାନ ସାବ୍ୟସ୍ତ କରିବା ଉପରେ ନିର୍ବାଚନ କମିଶନ ଗୁରୁତ୍ୱାରୋପ କରନ୍ତି। ଗ୍ରାମାଞ୍ଚଳର ଶିକ୍ଷିତ ଯୁବପିଢ଼ି ଏବେ ନିର୍ବାଚନୀ ଇସ୍ତାହାର ଏବଂ ବିକାଶମୂଳକ କାର୍ଯ୍ୟର ମୂଲ୍ୟାଙ୍କନ କରି ଭୋଟ ଦେବାକୁ ଆଗ୍ରହ ପ୍ରକାଶ କରୁଛନ୍ତି, ଯାହା ଏକ ସୁସ୍ଥ ଗଣତନ୍ତ୍ରର ସୂଚକ। ଓଡ଼ିଶାରେ ସ୍ଥାନୀୟ ସମସ୍ୟା ଯଥା କୃଷି, ଶିଳ୍ପାୟନ ଏବଂ ନିଯୁକ୍ତି ନିର୍ବାଚନର ମୁଖ୍ୟ ପ୍ରସଙ୍ଗ ପାଲଟିଥାଏ। ରାଜନୈତିକ ଦଳଗୁଡ଼ିକ ନିଜର ପ୍ରଚାର ମାଧ୍ୟମରେ ଜନସାଧାରଣଙ୍କ ନିକଟତର ହେବାକୁ ଚେଷ୍ଟା କରୁଥିବା ବେଳେ, ଶେଷ ନିଷ୍ପତ୍ତି କେବଳ ଜନତା ଜନାର୍ଦ୍ଦନଙ୍କ ହାତରେ ହିଁ ଥାଏ।</span><br><br> ଏହି ଅନୁଚ୍ଛେଦର ମୁଖ୍ୟ ଉଦ୍ଦେଶ୍ୟ କ’ଣ?",
+   o:['ଓଡ଼ିଶାରେ ଚାଷ କାର୍ଯ୍ୟର ପ୍ରଶଂସା କରିବା','ନିର୍ବାଚନୀ ପ୍ରକ୍ରିୟା ଓ ଏଥିରେ ଜନସାଧାରଣଙ୍କ ଭୂମିକାକୁ ବୁଝାଇବା','ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ରାଜନୈତିକ ଦଳର ପ୍ରଚାର କରିବା','କେବଳ ନିର୍ବାଚନ କମିଶନଙ୍କ ଦାୟିତ୍ୱ ବିଷୟରେ ସୂଚନା ଦେବା'],
    a:1,
-   exp:"Gain = 90 - 75 = 15. Percentage Gain = (15/75) × 100 = 20%."},
+   exp:'Refers to Passage'}
 
-{q:"If a car travels 90 km in 60 minutes, how far can it travel in 150 minutes at the same speed?",
-   o:["200 km","220 km","225 km","240 km"],
-   a:2,
-   exp:"Speed = Distance/Time = 90 km/1 hour = 90 km/h. In 2.5 hours (150 minutes), it can travel = 90 × 2.5 = 225 km."},
-
-{q:"A bottle contains a mixture of milk and water in the ratio of 3:2. If the total volume of the mixture is 50 liters, how much milk is there in the bottle?",
-   o:["20 liters","25 liters","30 liters","35 liters"],
-   a:2,
-   exp:"Total ratio = 3 + 2 = 5. Milk volume = (3/5) × 50 = 30 liters."},
-
-{q:"In a class, the ratio of boys to girls is 3:2. If there are 30 boys, how many girls are there?",
-   o:["20","25","30","35"],
-   a:0,
-   exp:"Ratio 3:2 means for every 3 boys, there are 2 girls. If there are 30 boys, girls = (2/3) × 30 = 20."},
-
-{q:"Two trains, A and B, are running towards each other. A travels at 50 km/h and B at 70 km/h. How far apart were they if they meet in 3 hours?",
-   o:["150 km","160 km","180 km","200 km"],
-   a:-1,
-   exp:"Relative speed = 50 + 70 = 120 km/h and in 3 hours, distance = speed × time = 120 × 3 = 360 km."},
-
-{q:"If the length of a rectangle is 5 cm more than its width, and the area is 60 cm², what is the width?",
-   o:["6 cm","8 cm","10 cm","12 cm"],
-   a:2,
-   exp:"Let width = x cm. Length = x + 5. Area = x(x + 5) = 60 ⇒ x² + 5x - 60 = 0. Solving, x = 10."}
- 
 
 
 
