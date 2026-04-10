@@ -3,79 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSSSC RI</title>
+    <title>Exam Portal</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: #f4f7f6;
-        }
-
-        h2 {
-            padding: 20px 10px;
-            margin: 0;
-            color: #333;
-        }
-
-        .card-container { 
-            display: flex; 
-            gap: 15px; 
-            flex-wrap: wrap; 
-            padding: 15px; 
-            justify-content: center; /* Centers cards on mobile */
-        }
-
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        h2 { text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .section-title { width: 100%; margin-top: 30px; padding: 10px; background: #e9ecef; border-radius: 8px; }
+        .card-container { display: flex; gap: 15px; flex-wrap: wrap; padding: 15px; justify-content: center; }
         .card { 
-            background: white;
-            border: 1px solid #eee; 
-            padding: 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            text-align: center;
-            /* Mobile Default: Take up almost full width or half width */
-            width: calc(100% - 40px); 
-            max-width: 300px; 
-            transition: transform 0.2s;
+            background: white; border: 1px solid #eee; padding: 20px; border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; width: 200px;
         }
-
-        .card:active {
-            transform: scale(0.98); /* Visual feedback for touch */
-        }
-
-        .card h3 {
-            margin: 10px 0;
-            font-size: 1.2rem;
-        }
-
         .card a { 
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none; 
-            border-radius: 5px;
-            font-weight: bold; 
-            width: 80%;
-        }
-
-        /* Desktop Adjustments */
-        @media (min-width: 600px) {
-            .card {
-                width: 200px; /* Smaller fixed width for larger screens */
-            }
-            .card-container {
-                justify-content: flex-start; /* Align left on desktop */
-            }
+            display: inline-block; margin-top: 10px; padding: 10px; background-color: #007bff; 
+            color: white; text-decoration: none; border-radius: 5px; font-weight: bold; width: 100%; 
         }
     </style>
 </head>
 <body>
 
-    <center><h2>OSSSC RI, ARI & Others ODIA SECTIONAL MOCKTESTS</h2></center>
-    
-    <div id="exam-list" class="card-container">
-        </div>
+    <center><h2>OSSSC EXAM DASHBOARD</h2></center>
+
+    <div class="section-title"><h3>📝 Sectional Tests (!)</h3></div>
+    <div id="sectional-list" class="card-container"></div>
+
+    <div class="section-title"><h3>🏆 Full Tests (@)</h3></div>
+    <div id="full-list" class="card-container"></div>
+
+    <div class="section-title"><h3>📚 PYQ (#)</h3></div>
+    <div id="pyq-list" class="card-container"></div>
 
     <script src="script.js"></script>
 </body>
